@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Sách Toàn Team - Bảng Xếp Hạng Lumi</title>
+    <meta http-equiv="refresh" content="300">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon"
+        href="https://www.appsheet.com/template/gettablefileurl?appName=Appsheet-325045268&amp;tableName=Kho%20%E1%BA%A3nh&amp;fileName=Kho%20%E1%BA%A3nh_Images%2Ff930e667.%E1%BA%A2nh.025539.jpg">
+    <link rel="shortcut icon" type="image/x-icon"
+        href="https://www.appsheet.com/template/gettablefileurl?appName=Appsheet-325045268&amp;tableName=Kho%20%E1%BA%A3nh&amp;fileName=Kho%20%E1%BA%A3nh_Images%2Ff930e667.%E1%BA%A2nh.025539.jpg">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Roboto:wght@400;500;700;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --brand-color: #28a745;
+            --sale-gradient: linear-gradient(90deg, #2E3192 0%, #1BFFFF 100%);
+            --mkt-gradient: linear-gradient(90deg, #FDB931 0%, #F57F17 100%);
+            --team-gradient: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            --gold: #FFD700;
+            --gold-glow: rgba(255, 215, 0, 0.6);
+            --silver: #C0C0C0;
+            --bronze: #CD7F32;
+        }
+
+        html {
+            overflow-x: hidden;
+            font-size: 1.2vw;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0.5vh 0;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1vh 1.5vw;
+            margin-bottom: 1vh;
+            position: relative;
+        }
+
+        .lumi-logo {
+            height: 6vh;
+            width: auto;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+            filter: contrast(1.1);
+        }
+
+        .lumi-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 2.8vw;
+            background: linear-gradient(to right, #11998e, #38ef7d);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 0;
+            line-height: 0.85;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 2.5vw;
+            font-weight: 900;
+            background: var(--team-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            margin: 1vh 0;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 0 30px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .team-column {
+            background: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .team-column-header {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 900;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .team-column-header.sale {
+            color: #007bff;
+        }
+
+        .team-column-header.mkt {
+            color: #ff6b6b;
+        }
+
+        #team-sale-list,
+        #team-mkt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .rank-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.6vh;
+            padding: 0.6vh 0.8vw;
+            border-radius: 12px;
+            background: #fff;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+            border: 1px solid transparent;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .rank-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .rank-item.top-1 {
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            background: linear-gradient(to right, #fffff0, #fff);
+        }
+
+        .rank-item.top-2 {
+            border: 1px solid rgba(192, 192, 192, 0.3);
+            background: linear-gradient(to right, #f8f9fa, #fff);
+        }
+
+        .rank-item.top-3 {
+            border: 1px solid rgba(205, 127, 50, 0.3);
+            background: linear-gradient(to right, #fff5ee, #fff);
+        }
+
+        .rank-pos {
+            width: 2.5vw;
+            font-weight: 900;
+            font-size: 1.2vw;
+            color: #ccc;
+            text-align: center;
+            margin-right: 0.8vw;
+            flex-shrink: 0;
+        }
+
+        .rank-pos.rank-1 {
+            color: var(--gold);
+            font-size: 1.8vw;
+            text-shadow: 0 0 10px var(--gold-glow);
+        }
+
+        .rank-pos.rank-2 {
+            color: var(--silver);
+            font-size: 1.6vw;
+        }
+
+        .rank-pos.rank-3 {
+            color: var(--bronze);
+            font-size: 1.4vw;
+        }
+
+        .user-info-group {
+            display: flex;
+            align-items: center;
+            width: 8vw;
+            flex-shrink: 0;
+        }
+
+        .avatar {
+            width: 3vh;
+            height: 3vh;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 0.15vh solid #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            margin-right: 0.6vw;
+            position: relative;
+        }
+
+        .avatar-crown {
+            position: absolute;
+            top: -1.5vh;
+            left: 1.5vw;
+            color: var(--gold);
+            font-size: 1.5vw;
+            filter: drop-shadow(0 0 5px var(--gold-glow));
+            animation: bounce 2s infinite;
+            z-index: 10;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .rank-item.top-1 .avatar {
+            border-color: var(--gold);
+        }
+
+        .rank-item.top-2 .avatar {
+            border-color: var(--silver);
+        }
+
+        .rank-item.top-3 .avatar {
+            border-color: var(--bronze);
+        }
+
+        .info-text {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .name {
+            font-weight: 800;
+            font-size: 1.1vw;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+
+        .bar-container {
+            flex: 1;
+            background-color: #f1f3f5;
+            border-radius: 12px;
+            height: 2.2vh;
+            position: relative;
+            margin-left: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.6vw;
+            font-weight: 900;
+            font-size: 0.9vw;
+            color: #fff;
+            width: 0%;
+            max-width: 100%;
+            transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+            white-space: nowrap;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .team-column.sale .bar-fill {
+            background: var(--sale-gradient);
+        }
+
+        .team-column.mkt .bar-fill {
+            background: var(--mkt-gradient);
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 0 15px;
+            }
+
+            .app-header {
+                flex-direction: column;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="https://www.appsheet.com/template/gettablefileurl?appName=Appsheet-325045268&amp;tableName=Kho%20%E1%BA%A3nh&amp;fileName=Kho%20%E1%BA%A3nh_Images%2Ff930e667.%E1%BA%A2nh.025539.jpg"
+                alt="Lumi Logo" class="lumi-logo">
+            <h1 class="lumi-brand">LUMI</h1>
+        </div>
+    </div>
+
+    <div class="page-title">
+        <i class="fa-solid fa-users"></i> DANH SÁCH TOÀN TEAM
+    </div>
+
+    <div class="container">
+        <div class="team-column sale">
+            <div class="team-column-header sale">
+                <i class="fa-solid fa-chart-line"></i> TEAM SALE
+            </div>
+            <div id="team-sale-list"></div>
+        </div>
+        <div class="team-column mkt">
+            <div class="team-column-header mkt">
+                <i class="fa-solid fa-bullhorn"></i> TEAM MKT
+            </div>
+            <div id="team-mkt-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // This file extracts the team list code from "BXH vinh danh.html"
+        // For full functionality, this script needs to be connected to the data loading and rendering functions
+        // from the original file. This is a simplified version for the structure.
+        
+        // NOTE: This file needs the complete JavaScript code from "BXH vinh danh.html"
+        // to function properly. Please copy the script section from the original file.
+        
+        console.log('Danh sách toàn team - Structure loaded');
+        console.log('NOTE: This file needs the complete JavaScript from "BXH vinh danh.html" to function.');
+    </script>
+</body>
+
+</html>

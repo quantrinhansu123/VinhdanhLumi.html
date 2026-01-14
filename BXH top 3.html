@@ -1533,6 +1533,46 @@
             renderDangerList('danger-sale', bottomSale);
             renderDangerList('danger-mkt', bottomMkt);
 
+            // Lưu dữ liệu toàn team và filter vào localStorage để "danh sách toàn team.html" sử dụng
+            const saleListFull = [...(stats.saleListUnfiltered || stats.saleList)];
+            const mktListFull = [...(stats.mktListUnfiltered || stats.mktList)];
+            
+            // Tính lại percent cho từng list
+            if (saleListFull.length > 0) {
+                const maxSale = saleListFull[0].rawVal;
+                saleListFull.forEach(i => i.percent = maxSale > 0 ? (i.rawVal / maxSale) * 100 : 0);
+            }
+            if (mktListFull.length > 0) {
+                const maxMkt = mktListFull[0].rawVal;
+                mktListFull.forEach(i => i.percent = maxMkt > 0 ? (i.rawVal / maxMkt) * 100 : 0);
+            }
+            
+            // Lưu dữ liệu team list
+            localStorage.setItem('teamListData', JSON.stringify({
+                saleList: saleListFull,
+                mktList: mktListFull,
+                timeLabel: timeLabel
+            }));
+            
+            // Lưu filter settings
+            const m = parseInt(document.getElementById('filter-month').value);
+            const y = parseInt(document.getElementById('filter-year').value);
+            localStorage.setItem('filterSettings', JSON.stringify({
+                periodType: type,
+                periodValue: weekValue,
+                month: m,
+                year: y
+            }));
+            
+            // Trigger custom event để các iframe khác biết dữ liệu đã thay đổi
+            try {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'teamListDataUpdated' }, '*');
+                }
+            } catch (e) {
+                // Ignore cross-origin errors
+            }
+
             setTimeout(() => {
                 document.querySelectorAll('.bar-fill').forEach(bar => bar.style.width = bar.getAttribute('data-width'));
             }, 100);

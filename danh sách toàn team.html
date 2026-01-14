@@ -342,15 +342,140 @@
     </div>
 
     <script>
-        // This file extracts the team list code from "BXH vinh danh.html"
-        // For full functionality, this script needs to be connected to the data loading and rendering functions
-        // from the original file. This is a simplified version for the structure.
-        
-        // NOTE: This file needs the complete JavaScript code from "BXH vinh danh.html"
-        // to function properly. Please copy the script section from the original file.
-        
-        console.log('Danh sách toàn team - Structure loaded');
-        console.log('NOTE: This file needs the complete JavaScript from "BXH vinh danh.html" to function.');
+        // Hàm helper để rút gọn tên
+        function abbreviateName(fullName) {
+            if (!fullName) return "";
+            const parts = fullName.trim().split(/\s+/);
+            if (parts.length === 1) return parts[0];
+            const firstName = parts[parts.length - 1];
+            const others = parts.slice(0, parts.length - 1);
+            const initials = others.map(part => part.charAt(0).toUpperCase()).join('');
+            return `${firstName}-${initials}`;
+        }
+
+        // Hàm render danh sách team
+        function renderTeamList(containerId, data, isSale) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu</div>';
+                return;
+            }
+
+            let html = '';
+            data.forEach((item, index) => {
+                const rank = index + 1;
+                const crown = rank === 1 ? '<i class="fa-solid fa-crown avatar-crown"></i>' : '';
+                const topClass = rank <= 3 ? `top-${rank}` : '';
+                
+                // Hiển thị thông số tùy theo loại team
+                let metricsHtml = '';
+                if (isSale && item.closeRate) {
+                    metricsHtml = `
+                        <div style="font-size: 0.65vw; color: #666; margin-top: 0.2vh; line-height: 1.4;">
+                            <div style="font-weight: 600; color: #007bff;">Tỉ lệ chốt: ${item.closeRate}</div>
+                            <div style="font-size: 0.6vw; color: #ff9800;">Số mess: ${(item.totalMess || 0).toLocaleString()}</div>
+                            <div style="font-size: 0.6vw; color: #28a745;">Số đơn: ${(item.totalOrders || 0).toLocaleString()}</div>
+                        </div>`;
+                } else if (!isSale && item.displayRate) {
+                    metricsHtml = `
+                        <div style="font-size: 0.65vw; color: #666; margin-top: 0.2vh; line-height: 1.4;">
+                            <div style="font-weight: 600; color: #ff6b6b;">ADS: ${item.displayRate}</div>
+                            <div style="font-size: 0.6vw; color: #28a745;">DS: ${formatMoney(item.doanhthu || 0)}</div>
+                            <div style="font-size: 0.6vw; color: #dc3545;">CPQC: ${formatMoney(item.cpqc || 0)}</div>
+                        </div>`;
+                }
+
+                html += `
+                <div class="rank-item ${topClass}">
+                    <div class="rank-pos ${rank <= 3 ? 'rank-' + rank : ''}">#${rank}</div>
+                    <div class="user-info-group">
+                        <div style="position:relative;">${crown}<img src="${item.avatar || 'https://via.placeholder.com/50'}" class="avatar" onerror="this.src='https://via.placeholder.com/50'"></div>
+                        <div class="info-text">
+                            <div class="name">${abbreviateName(item.name)}</div>
+                            ${metricsHtml}
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width:0%" data-width="${item.percent || 0}%">${item.value || '0'}</div>
+                    </div>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+            
+            // Animate bars sau khi render
+            setTimeout(() => {
+                container.querySelectorAll('.bar-fill').forEach(bar => {
+                    bar.style.width = bar.getAttribute('data-width');
+                });
+            }, 100);
+        }
+
+        // Hàm format tiền
+        function formatMoney(num) {
+            if (!num) return '0';
+            if (num >= 1000000) return Math.round(num / 1000000) + ' Tr';
+            return Math.round(num).toLocaleString('vi-VN');
+        }
+
+        // Hàm load và hiển thị dữ liệu
+        function loadAndDisplayData() {
+            try {
+                const teamListDataStr = localStorage.getItem('teamListData');
+                if (!teamListDataStr) {
+                    console.warn('Chưa có dữ liệu team list trong localStorage');
+                    document.getElementById('team-sale-list').innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu. Vui lòng mở "BXH top 3" trước.</div>';
+                    document.getElementById('team-mkt-list').innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu. Vui lòng mở "BXH top 3" trước.</div>';
+                    return;
+                }
+
+                const teamListData = JSON.parse(teamListDataStr);
+                console.log('Loaded team list data:', teamListData);
+
+                renderTeamList('team-sale-list', teamListData.saleList || [], true);
+                renderTeamList('team-mkt-list', teamListData.mktList || [], false);
+            } catch (e) {
+                console.error('Lỗi load dữ liệu:', e);
+                document.getElementById('team-sale-list').innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">Lỗi tải dữ liệu</div>';
+                document.getElementById('team-mkt-list').innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">Lỗi tải dữ liệu</div>';
+            }
+        }
+
+        // Load dữ liệu khi trang load
+        loadAndDisplayData();
+
+        // Lắng nghe thay đổi trong localStorage để tự động cập nhật khi filter thay đổi
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'teamListData') {
+                console.log('Dữ liệu team list đã được cập nhật, reloading...');
+                loadAndDisplayData();
+            }
+        });
+
+        // Lắng nghe postMessage từ parent window
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'teamListDataUpdated') {
+                console.log('Nhận thông báo cập nhật dữ liệu từ parent');
+                loadAndDisplayData();
+            }
+        });
+
+        // Polling để kiểm tra thay đổi localStorage (vì storage event chỉ hoạt động giữa các tab/window khác nhau)
+        let lastDataHash = '';
+        setInterval(() => {
+            try {
+                const currentData = localStorage.getItem('teamListData');
+                if (currentData && currentData !== lastDataHash) {
+                    lastDataHash = currentData;
+                    console.log('Phát hiện thay đổi dữ liệu, cập nhật...');
+                    loadAndDisplayData();
+                }
+            } catch (e) {
+                console.error('Lỗi kiểm tra localStorage:', e);
+            }
+        }, 1000); // Kiểm tra mỗi giây
     </script>
 </body>
 

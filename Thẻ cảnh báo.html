@@ -98,40 +98,6 @@
             margin-top: 0.5vh;
         }
 
-        .toolbar {
-            display: flex;
-            gap: 1vw;
-            background: linear-gradient(135deg, #44aa22 0%, #66cc44 100%);
-            padding: 1vh 1.5vw;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(68, 170, 34, 0.3);
-            position: absolute;
-            right: 2vw;
-            top: 3vh;
-            align-items: center;
-        }
-
-        .btn-team {
-            background: var(--team-gradient);
-            color: white;
-            border: none;
-            padding: 1vh 1.5vw;
-            border-radius: 25px;
-            font-weight: 700;
-            font-family: 'Roboto', sans-serif;
-            font-size: 0.9vw;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5vw;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-team:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.5);
-        }
 
         .filter-select {
             padding: 1vh 1.5vw;
@@ -809,13 +775,6 @@
                 flex-direction: column;
             }
 
-            .toolbar {
-                position: relative;
-                top: 0;
-                right: 0;
-                margin-bottom: 20px;
-                flex-wrap: wrap;
-            }
 
             .app-header {
                 flex-direction: column;
@@ -870,50 +829,6 @@
             </div>
         </div>
 
-        <div class="toolbar">
-            <button class="btn-team" onclick="pourDataToV2()"
-                style="background: linear-gradient(90deg, #FFD700 0%, #FF8C00 100%);">
-                <i class="fa-solid fa-crown"></i> Vinh Danh Top 3
-            </button>
-
-            <!-- CHỌN LOẠI THỜI GIAN -->
-            <select class="filter-select" id="period-type" onchange="toggleFilterUI()">
-                <option value="week">Theo Tuần</option>
-                <option value="month">Theo Tháng</option>
-            </select>
-
-            <!-- CHỌN TUẦN -->
-            <div id="week-filter-container">
-                <select class="filter-select" id="period-value" onchange="updateData()">
-                    <option value="w1">Tuần 1 (28/12 - 3/1)</option>
-                    <option value="w2">Tuần 2 (4/1 - 10/1)</option>
-                    <option value="w3">Tuần 3 (11/1 - 17/1)</option>
-                    <option value="w4">Tuần 4 (18/1 - 24/1)</option>
-                    <option value="w5">Tuần 5 (25/1 - 31/1)</option>
-                </select>
-            </div>
-
-            <!-- CHỌN THÁNG & NĂM -->
-            <div id="month-filter-container" style="display: none; gap: 5px;">
-                <select class="filter-select" id="filter-month" onchange="adjustYearForMonth(); updateData();">
-                    <option value="1">Tháng 1</option>
-                    <option value="2">Tháng 2</option>
-                    <option value="3">Tháng 3</option>
-                    <option value="4">Tháng 4</option>
-                    <option value="5">Tháng 5</option>
-                    <option value="6">Tháng 6</option>
-                    <option value="7">Tháng 7</option>
-                    <option value="8">Tháng 8</option>
-                    <option value="9">Tháng 9</option>
-                    <option value="10">Tháng 10</option>
-                    <option value="11">Tháng 11</option>
-                    <option value="12">Tháng 12</option>
-                </select>
-                <select class="filter-select" id="filter-year" onchange="updateData()">
-                    <!-- JS sẽ điền năm -->
-                </select>
-            </div>
-        </div>
     </div>
 
     <!-- MAIN BOARDS -->
@@ -1856,31 +1771,40 @@
                 console.error('Lỗi đọc filter settings:', e);
             }
             
-            // Set giá trị mặc định nếu có trong localStorage
-            if (filterSettings) {
-                if (document.getElementById('period-type')) {
-                    document.getElementById('period-type').value = filterSettings.periodType || 'week';
-                }
-                if (document.getElementById('period-value')) {
-                    document.getElementById('period-value').value = filterSettings.periodValue || getCurrentWeek();
-                }
-                if (document.getElementById('filter-month')) {
-                    document.getElementById('filter-month').value = filterSettings.month || new Date().getMonth() + 1;
-                }
-                if (document.getElementById('filter-year')) {
-                    document.getElementById('filter-year').value = filterSettings.year || new Date().getFullYear();
-                }
-                toggleFilterUI();
-            } else {
-                // Mặc định
-                if (document.getElementById('filter-month')) {
-                    document.getElementById('filter-month').value = new Date().getMonth() + 1;
-                }
+            // Set giá trị mặc định - nếu không có filterSettings, set về tuần hiện tại
+            if (!filterSettings) {
+                const currentDate = new Date();
                 const currentWeek = getCurrentWeek();
-                if (document.getElementById('period-value')) {
-                    document.getElementById('period-value').value = currentWeek;
-                }
+                const currentMonth = currentDate.getMonth() + 1;
+                const currentYear = currentDate.getFullYear();
+                
+                // Tạo filter settings mặc định cho tuần hiện tại
+                filterSettings = {
+                    periodType: 'week',
+                    periodValue: currentWeek,
+                    month: currentMonth,
+                    year: currentYear
+                };
+                
+                // Lưu vào localStorage
+                localStorage.setItem('filterSettings', JSON.stringify(filterSettings));
+                console.log(`[THẺ CẢNH BÁO] Tự động set về tuần hiện tại: ${currentWeek}`);
             }
+            
+            // Áp dụng filter settings
+            if (document.getElementById('period-type')) {
+                document.getElementById('period-type').value = filterSettings.periodType || 'week';
+            }
+            if (document.getElementById('period-value')) {
+                document.getElementById('period-value').value = filterSettings.periodValue || getCurrentWeek();
+            }
+            if (document.getElementById('filter-month')) {
+                document.getElementById('filter-month').value = filterSettings.month || new Date().getMonth() + 1;
+            }
+            if (document.getElementById('filter-year')) {
+                document.getElementById('filter-year').value = filterSettings.year || new Date().getFullYear();
+            }
+            toggleFilterUI();
             
             // Lắng nghe thay đổi filter từ parent window (index.html)
             window.addEventListener('message', function(event) {

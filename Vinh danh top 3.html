@@ -473,6 +473,59 @@
             }
         }
 
+        // Hàm tính toán timeLabel từ filter settings hiện tại
+        function getCurrentTimeLabel() {
+            try {
+                const filterSettingsStr = localStorage.getItem('filterSettings');
+                if (filterSettingsStr) {
+                    const filterSettings = JSON.parse(filterSettingsStr);
+                    const type = filterSettings.periodType || 'week';
+                    
+                    if (type === 'week') {
+                        // Tính toán thời gian tuần dựa trên weekValue
+                        const weekValue = filterSettings.periodValue || 'w1';
+                        const weekRanges = {
+                            'w1': { date: new Date(2025, 11, 29) },
+                            'w2': { date: new Date(2026, 0, 5) },
+                            'w3': { date: new Date(2026, 0, 12) },
+                            'w4': { date: new Date(2026, 0, 19) },
+                            'w5': { date: new Date(2026, 0, 26) }
+                        };
+                        
+                        if (weekRanges[weekValue]) {
+                            const weekDate = weekRanges[weekValue].date;
+                            const day = weekDate.getDay();
+                            const diff = day === 0 ? -6 : 1 - day;
+                            const monday = new Date(weekDate);
+                            monday.setDate(weekDate.getDate() + diff);
+                            
+                            const sunday = new Date(monday);
+                            sunday.setDate(monday.getDate() + 6);
+                            
+                            const startDay = monday.getDate();
+                            const startMonth = monday.getMonth() + 1;
+                            const endDay = sunday.getDate();
+                            const endMonth = sunday.getMonth() + 1;
+                            
+                            return `Tuần ${weekValue.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
+                        }
+                    } else if (type === 'month') {
+                        const m = filterSettings.month || new Date().getMonth() + 1;
+                        const y = filterSettings.year || new Date().getFullYear();
+                        return `Tháng ${m}/${y}`;
+                    }
+                }
+            } catch (e) {
+                console.error('[VINH DANH] Lỗi đọc filter settings:', e);
+            }
+            
+            // Fallback: sử dụng từ dữ liệu hoặc mặc định
+            if (honorsData.length > 0 && honorsData[currentIdx] && honorsData[currentIdx].timeLabel) {
+                return honorsData[currentIdx].timeLabel;
+            }
+            return "TUẦN";
+        }
+
         function updatePlaque() {
             if (honorsData.length === 0) return;
             const person = honorsData[currentIdx];
@@ -486,7 +539,9 @@
             if (rank === 3) awardName = "TOP 3";
 
             document.querySelector('.main-title').innerText = awardName;
-            document.querySelector('.sub-title').innerText = "CỦA " + (person.timeLabel || "TUẦN");
+            // Đọc timeLabel từ filter settings hiện tại thay vì từ dữ liệu cũ
+            const currentTimeLabel = getCurrentTimeLabel();
+            document.querySelector('.sub-title').innerText = "CỦA " + currentTimeLabel;
 
             const img = document.getElementById('winner-img');
             img.src = person.avatar;
@@ -636,6 +691,17 @@
                     updatePlaque();
                 }
             }
+            // Lắng nghe thay đổi filter settings
+            if (e.key === 'filterSettings') {
+                console.log('[VINH DANH] Phát hiện thay đổi filter settings, đợi dữ liệu mới...');
+                // Đợi một chút để BXH top 3.html có thời gian tính lại và lưu dữ liệu
+                setTimeout(() => {
+                    if (loadHonorsData()) {
+                        currentIdx = 0;
+                        updatePlaque();
+                    }
+                }, 1000);
+            }
         });
 
         // Lắng nghe postMessage từ parent window
@@ -647,10 +713,22 @@
                     updatePlaque();
                 }
             }
+            // Lắng nghe thay đổi filter từ parent
+            if (event.data && event.data.type === 'filterUpdate') {
+                console.log('[VINH DANH] Nhận thông báo filter đã thay đổi, đợi dữ liệu mới...');
+                // Đợi một chút để BXH top 3.html có thời gian tính lại và lưu dữ liệu
+                setTimeout(() => {
+                    if (loadHonorsData()) {
+                        currentIdx = 0;
+                        updatePlaque();
+                    }
+                }, 1000);
+            }
         });
 
         // Polling để kiểm tra thay đổi localStorage (backup mechanism)
         let lastHonorsDataHash = '';
+        let lastFilterHash = '';
         setInterval(() => {
             try {
                 const currentData = localStorage.getItem('vinhDanhTop3');
@@ -661,6 +739,20 @@
                         currentIdx = 0; // Reset về người đầu tiên
                         updatePlaque();
                     }
+                }
+                
+                // Kiểm tra thay đổi filter settings
+                const currentFilter = localStorage.getItem('filterSettings');
+                if (currentFilter && currentFilter !== lastFilterHash) {
+                    lastFilterHash = currentFilter;
+                    console.log('[VINH DANH] Phát hiện thay đổi filter qua polling, đợi dữ liệu mới...');
+                    // Đợi một chút để BXH top 3.html có thời gian tính lại và lưu dữ liệu
+                    setTimeout(() => {
+                        if (loadHonorsData()) {
+                            currentIdx = 0;
+                            updatePlaque();
+                        }
+                    }, 1500);
                 }
             } catch (e) {
                 console.error('[VINH DANH] Lỗi kiểm tra localStorage:', e);

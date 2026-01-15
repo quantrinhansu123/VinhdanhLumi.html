@@ -95,40 +95,6 @@
             margin-top: 0.5vh;
         }
 
-        .toolbar {
-            display: flex;
-            gap: 1vw;
-            background: #fff;
-            padding: 1vh 1.5vw;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            position: absolute;
-            right: 2vw;
-            top: 3vh;
-            align-items: center;
-        }
-
-        .btn-team {
-            background: var(--team-gradient);
-            color: white;
-            border: none;
-            padding: 1vh 1.5vw;
-            border-radius: 25px;
-            font-weight: 700;
-            font-family: 'Roboto', sans-serif;
-            font-size: 0.9vw;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5vw;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-team:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.5);
-        }
 
         .filter-select {
             padding: 1vh 1.5vw;
@@ -741,54 +707,44 @@
             </div>
         </div>
 
-        <div class="toolbar">
-            <button class="btn-team" onclick="pourDataToV2()"
-                style="background: linear-gradient(90deg, #FFD700 0%, #FF8C00 100%);">
-                <i class="fa-solid fa-crown"></i> Vinh Danh Top 3
-            </button>
-            <button class="btn-team" onclick="openTeamModal()">
-                <i class="fa-solid fa-users"></i> BXH Toàn Team
-            </button>
+        <!-- BỘ LỌC ĐÃ ĐƯỢC DI CHUYỂN LÊN INDEX.HTML - ẨN Ở ĐÂY -->
+        <div style="display: none;">
+            <!-- CHỌN LOẠI THỜI GIAN -->
+            <select class="filter-select" id="period-type" onchange="toggleFilterUI()">
+                <option value="week">Theo Tuần</option>
+                <option value="month">Theo Tháng</option>
+            </select>
 
-            <!-- BỘ LỌC ĐÃ ĐƯỢC DI CHUYỂN LÊN INDEX.HTML - ẨN Ở ĐÂY -->
-            <div style="display: none;">
-                <!-- CHỌN LOẠI THỜI GIAN -->
-                <select class="filter-select" id="period-type" onchange="toggleFilterUI()">
-                    <option value="week">Theo Tuần</option>
-                    <option value="month">Theo Tháng</option>
+            <!-- CHỌN TUẦN -->
+            <div id="week-filter-container">
+                <select class="filter-select" id="period-value" onchange="updateData()">
+                    <option value="w1">Tuần 1 (28/12 - 3/1)</option>
+                    <option value="w2">Tuần 2 (4/1 - 10/1)</option>
+                    <option value="w3">Tuần 3 (11/1 - 17/1)</option>
+                    <option value="w4">Tuần 4 (18/1 - 24/1)</option>
+                    <option value="w5">Tuần 5 (25/1 - 31/1)</option>
                 </select>
+            </div>
 
-                <!-- CHỌN TUẦN -->
-                <div id="week-filter-container">
-                    <select class="filter-select" id="period-value" onchange="updateData()">
-                        <option value="w1">Tuần 1 (28/12 - 3/1)</option>
-                        <option value="w2">Tuần 2 (4/1 - 10/1)</option>
-                        <option value="w3">Tuần 3 (11/1 - 17/1)</option>
-                        <option value="w4">Tuần 4 (18/1 - 24/1)</option>
-                        <option value="w5">Tuần 5 (25/1 - 31/1)</option>
-                    </select>
-                </div>
-
-                <!-- CHỌN THÁNG & NĂM -->
-                <div id="month-filter-container" style="display: none; gap: 5px;">
-                    <select class="filter-select" id="filter-month" onchange="adjustYearForMonth(); updateData();">
-                        <option value="1">Tháng 1</option>
-                        <option value="2">Tháng 2</option>
-                        <option value="3">Tháng 3</option>
-                        <option value="4">Tháng 4</option>
-                        <option value="5">Tháng 5</option>
-                        <option value="6">Tháng 6</option>
-                        <option value="7">Tháng 7</option>
-                        <option value="8">Tháng 8</option>
-                        <option value="9">Tháng 9</option>
-                        <option value="10">Tháng 10</option>
-                        <option value="11">Tháng 11</option>
-                        <option value="12">Tháng 12</option>
-                    </select>
-                    <select class="filter-select" id="filter-year" onchange="updateData()">
-                        <!-- JS sẽ điền năm -->
-                    </select>
-                </div>
+            <!-- CHỌN THÁNG & NĂM -->
+            <div id="month-filter-container" style="display: none; gap: 5px;">
+                <select class="filter-select" id="filter-month" onchange="adjustYearForMonth(); updateData();">
+                    <option value="1">Tháng 1</option>
+                    <option value="2">Tháng 2</option>
+                    <option value="3">Tháng 3</option>
+                    <option value="4">Tháng 4</option>
+                    <option value="5">Tháng 5</option>
+                    <option value="6">Tháng 6</option>
+                    <option value="7">Tháng 7</option>
+                    <option value="8">Tháng 8</option>
+                    <option value="9">Tháng 9</option>
+                    <option value="10">Tháng 10</option>
+                    <option value="11">Tháng 11</option>
+                    <option value="12">Tháng 12</option>
+                </select>
+                <select class="filter-select" id="filter-year" onchange="updateData()">
+                    <!-- JS sẽ điền năm -->
+                </select>
             </div>
         </div>
     </div>
@@ -1110,10 +1066,21 @@
 
                 if (resF3 && resF3.ok) {
                     const json = await resF3.json();
-                    console.log('F3 Data Raw:', json);
-                    if (json.success && Array.isArray(json.data)) allOrders = json.data;
-                    else if (Array.isArray(json)) allOrders = json;
-                    else allOrders = Object.values(json.data || json);
+                    console.log('[LOAD DATA] F3 Data Raw:', json);
+                    if (json.success && Array.isArray(json.data)) {
+                        allOrders = json.data;
+                        console.log('[LOAD DATA] Loaded orders from json.data:', allOrders.length);
+                    }
+                    else if (Array.isArray(json)) {
+                        allOrders = json;
+                        console.log('[LOAD DATA] Loaded orders from json array:', allOrders.length);
+                    }
+                    else {
+                        allOrders = Object.values(json.data || json);
+                        console.log('[LOAD DATA] Loaded orders from Object.values:', allOrders.length);
+                    }
+                } else {
+                    console.warn('[LOAD DATA] F3 API không trả về dữ liệu hoặc có lỗi');
                 }
 
                 if (resReport && resReport.ok) {
@@ -1130,11 +1097,15 @@
                     buildHRDataMap();
                 }
 
+                console.log('[LOAD DATA] Tổng số đơn sau khi load:', allOrders.length);
+                
                 if (allOrders.length === 0) {
-                    console.warn("API không trả về dữ liệu, dùng Demo Data");
+                    console.warn("[LOAD DATA] API không trả về dữ liệu, dùng Demo Data");
                     loadDemoData();
+                    console.log('[LOAD DATA] Sau khi load demo data:', allOrders.length);
                 }
 
+                console.log('[LOAD DATA] Gọi updateData()...');
                 updateData();
             } catch (e) {
                 console.error("Lỗi load data:", e);
@@ -1461,6 +1432,14 @@
             const shouldFilterStatus = (type === 'month') || (type === 'week' && !isCurrentPeriod);
             const stats = calculateStats(start, end, shouldFilterStatus, isCurrentPeriod);
             currentStats = stats; // Lưu stats để dùng cho vinh danh
+            
+            // Debug: Kiểm tra dữ liệu stats
+            console.log('[UPDATE DATA] Stats received:', {
+                saleListLength: stats.saleList ? stats.saleList.length : 0,
+                mktListLength: stats.mktList ? stats.mktList.length : 0,
+                saleListUnfilteredLength: stats.saleListUnfiltered ? stats.saleListUnfiltered.length : 0,
+                mktListUnfilteredLength: stats.mktListUnfiltered ? stats.mktListUnfiltered.length : 0
+            });
 
             // Tạo timeLabel cho vinh danh
             let timeLabel = '';
@@ -1483,8 +1462,16 @@
             document.getElementById('date-range-display').innerText =
                 `${start.getDate()}/${start.getMonth() + 1}/${start.getFullYear()} - ${end.getDate()}/${end.getMonth() + 1}/${end.getFullYear()}`;
 
-            renderList('sale-list', stats.saleList.slice(0, 3), false);
-            renderList('mkt-list', stats.mktList.slice(0, 3), false);
+            // Debug: Kiểm tra dữ liệu trước khi render
+            console.log('[UPDATE DATA] Rendering lists:', {
+                saleListLength: stats.saleList ? stats.saleList.length : 0,
+                mktListLength: stats.mktList ? stats.mktList.length : 0,
+                saleListTop3: stats.saleList ? stats.saleList.slice(0, 3).map(s => s.name) : [],
+                mktListTop3: stats.mktList ? stats.mktList.slice(0, 3).map(m => m.name) : []
+            });
+            
+            renderList('sale-list', stats.saleList ? stats.saleList.slice(0, 3) : [], false);
+            renderList('mkt-list', stats.mktList ? stats.mktList.slice(0, 3) : [], false);
 
             const monthSections = document.querySelectorAll('.month-section');
             if (type === 'week') {
@@ -1708,7 +1695,16 @@
 
         function renderList(id, data, isSmall) {
             const el = document.getElementById(id);
-            if (!data.length) { el.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">Chưa có dữ liệu</div>'; return; }
+            if (!el) {
+                console.error(`[RENDER] Element với id "${id}" không tồn tại`);
+                return;
+            }
+            if (!data || !data.length) { 
+                console.warn(`[RENDER] Không có dữ liệu cho ${id}`);
+                el.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">Chưa có dữ liệu</div>'; 
+                return; 
+            }
+            console.log(`[RENDER] Rendering ${id} với ${data.length} items`);
             if (isSmall) { renderMonthList(id, data); return; }
 
             const isSaleBoard = id.includes('sale');
@@ -1815,31 +1811,40 @@
                 console.log(`[BXH TOP 3 THÁNG] Tự động set tháng ${currentMonth}/${currentYear}`);
             }
             
-            // Set giá trị mặc định nếu có trong localStorage
-            if (filterSettings) {
-                if (document.getElementById('period-type')) {
-                    document.getElementById('period-type').value = filterSettings.periodType || 'week';
-                }
-                if (document.getElementById('period-value')) {
-                    document.getElementById('period-value').value = filterSettings.periodValue || getCurrentWeek();
-                }
-                if (document.getElementById('filter-month')) {
-                    document.getElementById('filter-month').value = filterSettings.month || new Date().getMonth() + 1;
-                }
-                if (document.getElementById('filter-year')) {
-                    document.getElementById('filter-year').value = filterSettings.year || new Date().getFullYear();
-                }
-                toggleFilterUI();
-            } else {
-                // Mặc định
-                if (document.getElementById('filter-month')) {
-                    document.getElementById('filter-month').value = new Date().getMonth() + 1;
-                }
+            // Set giá trị mặc định - nếu không có filterSettings, set về tuần hiện tại
+            if (!filterSettings) {
+                const currentDate = new Date();
                 const currentWeek = getCurrentWeek();
-                if (document.getElementById('period-value')) {
-                    document.getElementById('period-value').value = currentWeek;
-                }
+                const currentMonth = currentDate.getMonth() + 1;
+                const currentYear = currentDate.getFullYear();
+                
+                // Tạo filter settings mặc định cho tuần hiện tại
+                filterSettings = {
+                    periodType: 'week',
+                    periodValue: currentWeek,
+                    month: currentMonth,
+                    year: currentYear
+                };
+                
+                // Lưu vào localStorage
+                localStorage.setItem('filterSettings', JSON.stringify(filterSettings));
+                console.log(`[BXH TOP 3] Tự động set về tuần hiện tại: ${currentWeek}`);
             }
+            
+            // Áp dụng filter settings
+            if (document.getElementById('period-type')) {
+                document.getElementById('period-type').value = filterSettings.periodType || 'week';
+            }
+            if (document.getElementById('period-value')) {
+                document.getElementById('period-value').value = filterSettings.periodValue || getCurrentWeek();
+            }
+            if (document.getElementById('filter-month')) {
+                document.getElementById('filter-month').value = filterSettings.month || new Date().getMonth() + 1;
+            }
+            if (document.getElementById('filter-year')) {
+                document.getElementById('filter-year').value = filterSettings.year || new Date().getFullYear();
+            }
+            toggleFilterUI();
             
             // Lắng nghe thay đổi filter từ parent window (index.html)
             window.addEventListener('message', function(event) {
@@ -1921,9 +1926,27 @@
                 return;
             }
 
+            // Sử dụng dữ liệu unfiltered nếu có, nếu không thì dùng filtered
+            const saleListToUse = currentStats.saleListUnfiltered && currentStats.saleListUnfiltered.length > 0 
+                ? currentStats.saleListUnfiltered 
+                : currentStats.saleList;
+            const mktListToUse = currentStats.mktListUnfiltered && currentStats.mktListUnfiltered.length > 0 
+                ? currentStats.mktListUnfiltered 
+                : currentStats.mktList;
+
+            console.log('[VINH DANH] Sale list length:', saleListToUse ? saleListToUse.length : 0);
+            console.log('[VINH DANH] MKT list length:', mktListToUse ? mktListToUse.length : 0);
+
+            if (!saleListToUse || saleListToUse.length === 0) {
+                console.warn('[VINH DANH] Không có dữ liệu Sale để lưu');
+            }
+            if (!mktListToUse || mktListToUse.length === 0) {
+                console.warn('[VINH DANH] Không có dữ liệu MKT để lưu');
+            }
+
             // SẮP XẾP LẠI trước khi lấy top 3 để đảm bảo thứ tự đúng
-            const sortedSaleList = [...currentStats.saleList].sort((a, b) => b.rawVal - a.rawVal);
-            const sortedMktList = [...currentStats.mktList].sort((a, b) => b.rawVal - a.rawVal);
+            const sortedSaleList = [...(saleListToUse || [])].sort((a, b) => b.rawVal - a.rawVal);
+            const sortedMktList = [...(mktListToUse || [])].sort((a, b) => b.rawVal - a.rawVal);
 
             // Lấy top 3 từ Sale và MKT
             const topSale = sortedSaleList.slice(0, 3);

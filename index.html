@@ -593,18 +593,27 @@
                     toggleFilterUI();
                     console.log('[FILTER] Đã load filter settings:', settings);
                 } else {
-                    // Mặc định
+                    // Mặc định - tự động set về tuần hiện tại
+                    const currentDate = new Date();
+                    const currentWeek = getCurrentWeek();
+                    const currentMonth = currentDate.getMonth() + 1;
+                    const currentYear = currentDate.getFullYear();
+                    
                     if (document.getElementById('period-type')) {
                         document.getElementById('period-type').value = 'week';
                     }
                     if (document.getElementById('period-value')) {
-                        document.getElementById('period-value').value = getCurrentWeek();
+                        document.getElementById('period-value').value = currentWeek;
                     }
                     if (document.getElementById('filter-month')) {
-                        document.getElementById('filter-month').value = new Date().getMonth() + 1;
+                        document.getElementById('filter-month').value = currentMonth;
+                    }
+                    if (document.getElementById('filter-year')) {
+                        document.getElementById('filter-year').value = currentYear;
                     }
                     toggleFilterUI();
-                    saveFilterSettings();
+                    saveFilterSettings(); // Lưu vào localStorage
+                    console.log(`[INDEX] Tự động set về tuần hiện tại: ${currentWeek}`);
                 }
             } catch (e) {
                 console.error('[FILTER] Lỗi load settings:', e);

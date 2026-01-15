@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng Nhân sự không đạt chỉ tiêu</title>
+    <title>Cảnh báo</title>
     <meta http-equiv="refresh" content="300">
 
     <!-- Favicon -->
@@ -58,6 +58,9 @@
             padding: 0.5vh 1.5vw;
             margin-bottom: 0.5vh;
             position: relative;
+            background: linear-gradient(135deg, #44aa22 0%, #66cc44 100%);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(68, 170, 34, 0.2);
         }
 
         .lumi-logo {
@@ -98,10 +101,10 @@
         .toolbar {
             display: flex;
             gap: 1vw;
-            background: #fff;
+            background: linear-gradient(135deg, #44aa22 0%, #66cc44 100%);
             padding: 1vh 1.5vw;
             border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 15px rgba(68, 170, 34, 0.3);
             position: absolute;
             right: 2vw;
             top: 3vh;
@@ -224,19 +227,125 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
-        .rank-item.top-1 {
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            background: linear-gradient(to right, #fffff0, #fff);
+        /* Gradient đỏ từ đậm đến nhạt cho thẻ cảnh báo - Đỏ đậm ở bên phải */
+        .rank-item.warning-1 {
+            background: linear-gradient(to left, #fff, #a00000, #8b0000);
+            border: none;
+            box-shadow: 0 4px 15px rgba(139, 0, 0, 0.3);
         }
 
-        .rank-item.top-2 {
-            border: 1px solid rgba(192, 192, 192, 0.3);
-            background: linear-gradient(to right, #f8f9fa, #fff);
+        .rank-item.warning-2 {
+            background: linear-gradient(to left, #fff, #c03030, #b22222);
+            border: none;
+            box-shadow: 0 4px 15px rgba(178, 34, 34, 0.25);
         }
 
-        .rank-item.top-3 {
-            border: 1px solid rgba(205, 127, 50, 0.3);
-            background: linear-gradient(to right, #fff5ee, #fff);
+        .rank-item.warning-3 {
+            background: linear-gradient(to left, #fff, #e03050, #dc143c);
+            border: none;
+            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.2);
+        }
+
+        .rank-item.warning-4 {
+            background: linear-gradient(to left, #fff, #ff4444, #ff2222);
+            border: none;
+            box-shadow: 0 4px 15px rgba(255, 34, 34, 0.2);
+        }
+
+        .rank-item.warning-5 {
+            background: linear-gradient(to left, #fff, #ff6666, #ff4444);
+            border: none;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.15);
+        }
+
+        .rank-item.warning-6 {
+            background: linear-gradient(to left, #fff, #ff8888, #ff6666);
+            border: none;
+            box-shadow: 0 4px 15px rgba(255, 102, 102, 0.15);
+        }
+
+        /* Avatar to hơn trong thẻ cảnh báo */
+        .rank-item[class*="warning"] .avatar {
+            width: 12vh !important;
+            height: 12vh !important;
+            border-width: 0.4vh !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+            margin-right: 1.5vw !important;
+        }
+
+        /* Icon cảnh báo */
+        .warning-icon {
+            color: #dc3545;
+            font-size: 2.5vw;
+            margin-right: 1vw;
+            animation: pulse-warning 2s infinite;
+            filter: drop-shadow(0 0 5px rgba(220, 53, 69, 0.8));
+        }
+
+        @keyframes pulse-warning {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Màu chữ cho thẻ cảnh báo - Nổi bật với nền đỏ */
+        /* Sửa container để không cắt chữ */
+        .rank-item[class*="warning"] {
+            overflow: visible !important;
+            min-width: fit-content;
+        }
+
+        .rank-item[class*="warning"] .user-info-group {
+            overflow: visible !important;
+            width: auto !important;
+            min-width: fit-content;
+            flex-shrink: 1;
+        }
+
+        .rank-item[class*="warning"] .info-text {
+            overflow: visible !important;
+            flex: 0 1 auto;
+            min-width: fit-content;
+        }
+
+        .rank-item[class*="warning"] .name {
+            color: #FFD700; /* Màu vàng vàng nổi bật */
+            text-shadow: 
+                0 0 10px rgba(255, 215, 0, 0.5);
+            font-weight: 900;
+            white-space: nowrap; /* Chữ nằm ngang, không xuống dòng */
+            overflow: visible !important; /* Không cắt chữ */
+            text-overflow: clip !important; /* Không dùng ellipsis */
+            display: block;
+            width: auto;
+            min-width: fit-content;
+        }
+
+        .rank-item[class*="warning"] .stat-item {
+            color: #FFA500 !important; /* Màu vàng đậm (cam vàng) */
+            text-shadow: 
+                0 0 10px rgba(255, 165, 0, 0.8),
+                0 0 20px rgba(255, 165, 0, 0.5);
+            white-space: nowrap; /* Chữ nằm ngang, không xuống dòng */
+            overflow: visible !important; /* Không cắt chữ */
+            text-overflow: clip !important; /* Không dùng ellipsis */
+            font-weight: 900 !important;
+            font-size: 1.5vw !important; /* Chữ to hơn */
+        }
+        
+        /* Tỉ lệ chốt nổi bật đặc biệt */
+        .rank-item[class*="warning"] .stat-item.close-rate-blink {
+            color: #FF8C00 !important; /* Màu vàng cam đậm */
+            text-shadow: 
+                0 0 15px rgba(255, 140, 0, 1),
+                0 0 25px rgba(255, 140, 0, 0.8);
+            font-weight: 900 !important;
+            font-size: 1.6vw !important; /* Chữ to nhất */
         }
 
         .rank-pos {
@@ -756,7 +865,7 @@
                 alt="Lumi Logo" class="lumi-logo">
             <h1 class="lumi-brand">LUMI</h1>
             <div>
-                <div class="lumi-subtitle">Bảng Nhân sự không đạt chỉ tiêu</div>
+                <div class="lumi-subtitle">Cảnh báo</div>
                 <div id="date-range-display" class="date-range-display" style="margin-top: 5px;"></div>
             </div>
         </div>
@@ -1351,36 +1460,61 @@
             const saleListUnfiltered = [...saleList];
             const mktListUnfiltered = [...mktList];
 
-            // LỌC SALE: LUÔN ÁP DỤNG (cả tuần hiện tại và đã qua)
-            // LUÔN LUÔN chỉ giữ lại những người có Close Rate < 5% (loại bỏ >= 5%)
+            // LỌC SALE: Rule mới - Cảnh báo nếu:
+            // - TLC < 5% HOẶC
+            // - Doanh số < 7 triệu x Số ngày từ đầu tháng (Ca ngày) HOẶC
+            // - Doanh số < 8 triệu x Số ngày từ đầu tháng (Ca đêm)
             const beforeSaleFilter = saleList.length;
             
+            // Tính số ngày từ đầu tháng
+            const now = new Date();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const daysFromMonthStart = Math.floor((now - firstDayOfMonth) / (1000 * 60 * 60 * 24)) + 1;
+            
+            // Tính threshold doanh số theo ca (sử dụng currentShift đã có)
+            const saleThresholdDay = 7000000; // 7 triệu cho ca ngày
+            const saleThresholdNight = 8000000; // 8 triệu cho ca đêm
+            const saleThreshold = (currentShift === 'Ca ngày') ? saleThresholdDay : saleThresholdNight;
+            const saleMinRevenue = saleThreshold * daysFromMonthStart;
+            
             saleList = saleList.filter(item => {
-                // Nếu chưa có data (totalMess = 0), loại bỏ (không tính)
-                if (!item.totalMess || item.totalMess === 0) return false;
-
-                // Nếu có data, kiểm tra Close Rate < 5%
+                // Kiểm tra TLC < 5%
                 const closeRateValue = parseFloat(item.closeRate) || 0;
-                return closeRateValue < 5;
+                const hasLowCloseRate = item.totalMess > 0 && closeRateValue < 5;
+                
+                // Kiểm tra doanh số < threshold x số ngày
+                const hasLowRevenue = item.rawVal < saleMinRevenue;
+                
+                // Cảnh báo nếu một trong các điều kiện thỏa mãn
+                return hasLowCloseRate || hasLowRevenue;
             });
-            console.log(`[FILTER] Sale: ${beforeSaleFilter} → ${saleList.length} (removed Close Rate >= 5%, kept only < 5%)`);
+            console.log(`[FILTER] Sale: ${beforeSaleFilter} → ${saleList.length} (Rule: TLC < 5% HOẶC Doanh số < ${(saleThreshold/1000000).toFixed(0)}tr x ${daysFromMonthStart} ngày = ${(saleMinRevenue/1000000).toFixed(1)}tr)`);
 
-            // LỌC MKT: LUÔN ÁP DỤNG (cả tuần hiện tại)
-            // Giữ lại những người có ADS Rate > 35% (loại bỏ <= 35%)
+            // LỌC MKT: Rule mới - Cảnh báo nếu:
+            // - ADS > 35% HOẶC
+            // - Doanh số < 18 triệu x Số ngày từ đầu tháng
             const beforeMktFilter = mktList.length;
+            
+            // Tính threshold doanh số MKT
+            const mktThreshold = 18000000; // 18 triệu
+            const mktMinRevenue = mktThreshold * daysFromMonthStart;
+            
             mktList = mktList.filter(item => {
-                // Nếu chưa có doanh thu, giữ lại
-                if (!item.doanhthu || item.doanhthu === 0) return true;
-
-                // Nếu có doanh thu, kiểm tra ADS Rate > 35%
-                return item.adsRate > 35;
+                // Kiểm tra ADS > 35%
+                const hasHighAdsRate = item.adsRate > 35;
+                
+                // Kiểm tra doanh số < threshold x số ngày
+                const hasLowRevenue = item.rawVal < mktMinRevenue;
+                
+                // Cảnh báo nếu một trong các điều kiện thỏa mãn
+                return hasHighAdsRate || hasLowRevenue;
             });
-            console.log(`[FILTER] MKT: ${beforeMktFilter} → ${mktList.length} (removed ADS Rate <= 35%, kept only > 35%)`);
+            console.log(`[FILTER] MKT: ${beforeMktFilter} → ${mktList.length} (Rule: ADS > 35% HOẶC Doanh số < 18tr x ${daysFromMonthStart} ngày = ${(mktMinRevenue/1000000).toFixed(1)}tr)`);
 
-            // SẮP XẾP LẠI SAU KHI LỌC để đảm bảo thứ tự đúng
-            saleList.sort((a, b) => b.rawVal - a.rawVal);
-            mktList.sort((a, b) => b.rawVal - a.rawVal);
-            console.log(`[SORT] Đã sắp xếp lại Sale và MKT theo doanh số giảm dần`);
+            // SẮP XẾP LẠI SAU KHI LỌC: Từ thấp đến cao (doanh số thấp nhất lên đầu)
+            saleList.sort((a, b) => a.rawVal - b.rawVal);
+            mktList.sort((a, b) => a.rawVal - b.rawVal);
+            console.log(`[SORT] Đã sắp xếp lại Sale và MKT theo doanh số tăng dần (thấp → cao)`);
 
             return {
                 saleList,           // Đã lọc - dùng cho top 3
@@ -1392,8 +1526,20 @@
 
         // --- UPDATE DATA ---
         function updateData() {
-            const type = document.getElementById('period-type').value;
-            const weekValue = document.getElementById('period-value').value;
+            // Đọc filter từ localStorage (được quản lý từ index.html)
+            let filterSettings = null;
+            try {
+                const settingsStr = localStorage.getItem('filterSettings');
+                if (settingsStr) {
+                    filterSettings = JSON.parse(settingsStr);
+                }
+            } catch (e) {
+                console.error('Lỗi đọc filter settings:', e);
+            }
+            
+            // Fallback về DOM nếu không có trong localStorage
+            const type = filterSettings ? filterSettings.periodType : (document.getElementById('period-type') ? document.getElementById('period-type').value : 'week');
+            const weekValue = filterSettings ? filterSettings.periodValue : (document.getElementById('period-value') ? document.getElementById('period-value').value : getCurrentWeek());
             const isCurrentPeriod = checkIsCurrentPeriod(type, weekValue);
 
             const { start, end } = getDateRange(type, weekValue);
@@ -1407,17 +1553,16 @@
             // Tạo timeLabel cho vinh danh
             let timeLabel = '';
             if (type === 'week') {
-                const weekLabels = {
-                    'w1': 'Tuần 1 (28/12 - 3/1)',
-                    'w2': 'Tuần 2 (4/1 - 10/1)',
-                    'w3': 'Tuần 3 (11/1 - 17/1)',
-                    'w4': 'Tuần 4 (18/1 - 24/1)',
-                    'w5': 'Tuần 5 (25/1 - 31/1)'
-                };
-                timeLabel = weekLabels[weekValue] || weekValue;
+                // Tính toán thời gian tuần dựa trên ngày thực tế
+                const { start: weekStart, end: weekEnd } = getDateRange(type, weekValue);
+                const startDay = weekStart.getDate();
+                const startMonth = weekStart.getMonth() + 1;
+                const endDay = weekEnd.getDate();
+                const endMonth = weekEnd.getMonth() + 1;
+                timeLabel = `Tuần ${weekValue.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
             } else {
-                const m = parseInt(document.getElementById('filter-month').value);
-                const y = parseInt(document.getElementById('filter-year').value);
+                const m = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1);
+                const y = filterSettings ? filterSettings.year : (document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : new Date().getFullYear());
                 timeLabel = `Tháng ${m}/${y}`;
             }
             currentStats.timeLabel = timeLabel;
@@ -1434,8 +1579,19 @@
         function checkIsCurrentPeriod(type, value) {
             const now = new Date();
             if (type === 'week') return value === getCurrentWeek();
-            return (parseInt(document.getElementById('filter-month').value) === now.getMonth() + 1 &&
-                parseInt(document.getElementById('filter-year').value) === now.getFullYear());
+            
+            // Đọc từ localStorage
+            let filterSettings = null;
+            try {
+                const settingsStr = localStorage.getItem('filterSettings');
+                if (settingsStr) {
+                    filterSettings = JSON.parse(settingsStr);
+                }
+            } catch (e) {}
+            
+            const m = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : now.getMonth() + 1);
+            const y = filterSettings ? filterSettings.year : (document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : now.getFullYear());
+            return (m === now.getMonth() + 1 && y === now.getFullYear());
         }
 
         // Hàm helper: Tính tuần từ một ngày (bắt đầu thứ 2, kết thúc chủ nhật)
@@ -1469,8 +1625,17 @@
                 start = weekRange.start;
                 end = weekRange.end;
             } else {
-                const m = parseInt(document.getElementById('filter-month').value);
-                const y = parseInt(document.getElementById('filter-year').value);
+                // Đọc từ localStorage
+                let filterSettings = null;
+                try {
+                    const settingsStr = localStorage.getItem('filterSettings');
+                    if (settingsStr) {
+                        filterSettings = JSON.parse(settingsStr);
+                    }
+                } catch (e) {}
+                
+                const m = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1);
+                const y = filterSettings ? filterSettings.year : (document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : new Date().getFullYear());
                 start = new Date(y, m - 1, 1);
                 end = new Date(y, m, 0, 23, 59, 59);
             }
@@ -1527,6 +1692,35 @@
             }
         }
 
+        // Cập nhật các option tuần với thời gian thực tế
+        function populateWeekOptions() {
+            const weekSelect = document.getElementById('period-value');
+            if (!weekSelect) return;
+
+            const weekRanges = [
+                { id: 'w1', date: new Date(2025, 11, 29) }, // Thứ 2
+                { id: 'w2', date: new Date(2026, 0, 5) }, // Thứ 2
+                { id: 'w3', date: new Date(2026, 0, 12) }, // Thứ 2
+                { id: 'w4', date: new Date(2026, 0, 19) }, // Thứ 2
+                { id: 'w5', date: new Date(2026, 0, 26) } // Thứ 2
+            ];
+
+            weekSelect.innerHTML = ''; // Xóa các option cũ
+
+            weekRanges.forEach(week => {
+                const weekRange = getWeekRange(week.date);
+                const startDay = weekRange.start.getDate();
+                const startMonth = weekRange.start.getMonth() + 1;
+                const endDay = weekRange.end.getDate();
+                const endMonth = weekRange.end.getMonth() + 1;
+                
+                const opt = document.createElement('option');
+                opt.value = week.id;
+                opt.textContent = `Tuần ${week.id.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
+                weekSelect.appendChild(opt);
+            });
+        }
+
         // Hàm tự động điều chỉnh năm khi chọn tháng
         function adjustYearForMonth() {
             const selectedMonth = parseInt(document.getElementById('filter-month').value);
@@ -1568,45 +1762,47 @@
             let html = '';
             data.forEach((item, i) => {
                 const rank = i + 1;
-                const crown = rank === 1 ? '<i class="fa-solid fa-crown avatar-crown"></i>' : '';
+                // Áp dụng class warning với gradient đỏ từ đậm đến nhạt
+                const warningClass = `warning-${Math.min(rank, 6)}`; // Tối đa 6 mức gradient
 
                 // Tạo các chỉ số ở góc phải với tên hạng mục
                 let statsHtml = '';
                 if (isSaleBoard) {
                     statsHtml = `
                         <div class="stats-container">
-                            <div class="stat-item" style="color: #007bff;">
-                                <span style="font-size: 0.75vw; opacity: 0.7;">Số mess: </span>${(item.totalMess || 0).toLocaleString()}
+                            <div class="stat-item">
+                                <span style="font-size: 0.75vw; opacity: 0.9;">Số mess: </span>${(item.totalMess || 0).toLocaleString()}
                             </div>
-                            <div class="stat-item" style="color: #28a745; font-size: 0.9vw;">
-                                <span style="font-size: 0.75vw; opacity: 0.7;">Số đơn: </span>${(item.totalOrders || 0).toLocaleString()}
+                            <div class="stat-item" style="font-size: 0.9vw;">
+                                <span style="font-size: 0.75vw; opacity: 0.9;">Số đơn: </span>${(item.totalOrders || 0).toLocaleString()}
                             </div>
-                            <div class="stat-item" style="color: #007bff;">
-                                <span style="font-size: 0.75vw; opacity: 0.7;">Doanh số: </span>${item.value}
+                            <div class="stat-item">
+                                <span style="font-size: 0.75vw; opacity: 0.9;">Doanh số: </span>${item.value}
                             </div>
-                            <div class="stat-item close-rate-blink" style="font-size: 0.9vw;">
-                                <span style="font-size: 0.75vw; opacity: 0.7;">Tỉ lệ chốt: </span>${item.closeRate || '0%'}
+                            <div class="stat-item close-rate-blink" style="font-size: 0.9vw; font-weight: 900;">
+                                <span style="font-size: 0.75vw; opacity: 0.9;">Tỉ lệ chốt: </span>${item.closeRate || '0%'}
                             </div>
                         </div>`;
                 } else if (isMktBoard) {
                     statsHtml = `
                         <div class="stats-container">
-                            <div class="stat-item" style="color: #ff6b6b;">
-                                <span style="font-size: 0.75vw; opacity: 0.7;">Doanh số: </span>${item.value}
+                            <div class="stat-item">
+                                <span style="font-size: 0.75vw; opacity: 0.9;">Doanh số: </span>${item.value}
                             </div>
-                            <div class="stat-item" style="color: #666; font-size: 0.9vw;">
-                                <span style="font-size: 0.75vw; opacity: 0.7;">ADS Rate: </span>${item.displayRate || '0%'}
+                            <div class="stat-item" style="font-size: 0.9vw;">
+                                <span style="font-size: 0.75vw; opacity: 0.9;">ADS Rate: </span>${item.displayRate || '0%'}
                             </div>
-                            <div class="stat-item" style="color: #dc3545; font-size: 0.9vw;">
-                                <span style="font-size: 0.75vw; opacity: 0.7;">CPQC: </span>${formatMoney(item.cpqc || 0)}
+                            <div class="stat-item" style="font-size: 0.9vw;">
+                                <span style="font-size: 0.75vw; opacity: 0.9;">CPQC: </span>${formatMoney(item.cpqc || 0)}
                             </div>
                         </div>`;
                 }
 
                 html += `
-                <div class="rank-item top-${rank} week-size">
-                    <div class="user-info-group">
-                        <div style="position:relative;">${crown}<img src="${item.avatar}" class="avatar"></div>
+                <div class="rank-item ${warningClass} week-size">
+                    <div class="user-info-group" style="display: flex; align-items: center; gap: 1vw;">
+                        <i class="fa-solid fa-triangle-exclamation warning-icon"></i>
+                        <div style="position:relative;"><img src="${item.avatar}" class="avatar"></div>
                         <div class="info-text">
                             <div class="name">${abbreviateName(item.name)}</div>
                         </div>
@@ -1647,9 +1843,76 @@
 
         function initApp() {
             populateYears();
-            document.getElementById('filter-month').value = new Date().getMonth() + 1;
-            const currentWeek = getCurrentWeek();
-            if (document.getElementById('period-value')) document.getElementById('period-value').value = currentWeek;
+            populateWeekOptions(); // Cập nhật các option tuần với thời gian thực tế
+            
+            // Load filter settings từ localStorage (được quản lý từ index.html)
+            let filterSettings = null;
+            try {
+                const settingsStr = localStorage.getItem('filterSettings');
+                if (settingsStr) {
+                    filterSettings = JSON.parse(settingsStr);
+                }
+            } catch (e) {
+                console.error('Lỗi đọc filter settings:', e);
+            }
+            
+            // Set giá trị mặc định nếu có trong localStorage
+            if (filterSettings) {
+                if (document.getElementById('period-type')) {
+                    document.getElementById('period-type').value = filterSettings.periodType || 'week';
+                }
+                if (document.getElementById('period-value')) {
+                    document.getElementById('period-value').value = filterSettings.periodValue || getCurrentWeek();
+                }
+                if (document.getElementById('filter-month')) {
+                    document.getElementById('filter-month').value = filterSettings.month || new Date().getMonth() + 1;
+                }
+                if (document.getElementById('filter-year')) {
+                    document.getElementById('filter-year').value = filterSettings.year || new Date().getFullYear();
+                }
+                toggleFilterUI();
+            } else {
+                // Mặc định
+                if (document.getElementById('filter-month')) {
+                    document.getElementById('filter-month').value = new Date().getMonth() + 1;
+                }
+                const currentWeek = getCurrentWeek();
+                if (document.getElementById('period-value')) {
+                    document.getElementById('period-value').value = currentWeek;
+                }
+            }
+            
+            // Lắng nghe thay đổi filter từ parent window (index.html)
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'filterChanged') {
+                    console.log('[THẺ CẢNH BÁO] Nhận thông báo filter đã thay đổi, cập nhật dữ liệu...');
+                    updateData();
+                }
+            });
+            
+            // Lắng nghe storage event
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'filterSettings') {
+                    console.log('[THẺ CẢNH BÁO] Filter settings đã thay đổi, cập nhật dữ liệu...');
+                    updateData();
+                }
+            });
+            
+            // Polling để kiểm tra thay đổi filter (backup)
+            let lastFilterHash = '';
+            setInterval(() => {
+                try {
+                    const currentFilter = localStorage.getItem('filterSettings');
+                    if (currentFilter && currentFilter !== lastFilterHash) {
+                        lastFilterHash = currentFilter;
+                        console.log('[THẺ CẢNH BÁO] Phát hiện thay đổi filter qua polling');
+                        updateData();
+                    }
+                } catch (e) {
+                    console.error('Lỗi kiểm tra filter:', e);
+                }
+            }, 1000);
+            
             loadData();
         }
 

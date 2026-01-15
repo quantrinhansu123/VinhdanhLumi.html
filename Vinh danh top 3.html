@@ -435,7 +435,7 @@
                 <div class="brand-name">Lumi Global</div>
             </div>
 
-            <div class="main-title">GIẢI NHẤT DOANH SỐ</div>
+            <div class="main-title">TOP 1</div>
             <div class="sub-title">CỦA TUẦN</div>
 
             <div class="name-pill" id="winner-name">NGUYỄN VĂN A</div>
@@ -480,10 +480,10 @@
             // SỬ DỤNG RANK TỪ DỮ LIỆU thay vì tính toán theo index
             const rank = person.rank || 1;
 
-            let awardName = "GIẢI KHUYẾN KHÍCH";
-            if (rank === 1) awardName = "GIẢI NHẤT DOANH SỐ";
-            if (rank === 2) awardName = "GIẢI NHÌ DOANH SỐ";
-            if (rank === 3) awardName = "GIẢI BA DOANH SỐ";
+            let awardName = "TOP 3";
+            if (rank === 1) awardName = "TOP 1";
+            if (rank === 2) awardName = "TOP 2";
+            if (rank === 3) awardName = "TOP 3";
 
             document.querySelector('.main-title').innerText = awardName;
             document.querySelector('.sub-title').innerText = "CỦA " + (person.timeLabel || "TUẦN");
@@ -510,22 +510,50 @@
 
         window.exitSlideshow = function () { window.location.href = 'BXH LUMI mới.html'; };
 
-        function init() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('mode') === 'slideshow') {
+        // Hàm load dữ liệu từ localStorage
+        function loadHonorsData() {
+            try {
                 const raw = localStorage.getItem('vinhDanhTop3');
                 if (raw) {
-                    honorsData = JSON.parse(raw);
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        honorsData = parsed;
+                        console.log('[VINH DANH] Đã load dữ liệu:', honorsData.length, 'người');
+                        return true;
+                    }
+                }
+                console.warn('[VINH DANH] Chưa có dữ liệu trong localStorage');
+                return false;
+            } catch (e) {
+                console.error('[VINH DANH] Lỗi load dữ liệu:', e);
+                return false;
+            }
+        }
+
+        function init() {
+            const params = new URLSearchParams(window.location.search);
+            const isSlideshow = params.get('mode') === 'slideshow';
+            
+            // Luôn load dữ liệu từ localStorage (không chỉ khi slideshow)
+            if (loadHonorsData()) {
+                if (isSlideshow) {
                     document.getElementById('slideshow-controls').style.display = 'block';
                     updatePlaque();
 
-                    // Tự động next sang nhân viên tiếp theo sau mỗi 30 giây
+                    // Tự động next sang nhân viên tiếp theo sau mỗi 1 phút (60 giây)
                     setInterval(() => {
                         if (honorsData.length > 0) {
                             changeSlide(1);
                         }
-                    }, 30000); // 30000ms = 30 giây
+                    }, 60000); // 60000ms = 1 phút
+                } else {
+                    // Nếu không phải slideshow, vẫn hiển thị người đầu tiên
+                    updatePlaque();
                 }
+            } else {
+                // Nếu chưa có dữ liệu, hiển thị thông báo
+                document.querySelector('.name-pill').innerText = 'Chưa có dữ liệu';
+                document.querySelector('.main-title').innerText = 'VUI LÒNG MỞ BXH TOP 3 TRƯỚC';
             }
         }
 
@@ -598,6 +626,46 @@
 
         // Tự động tính lại vị trí kim tuyến khi resize cửa sổ
         window.addEventListener('resize', createBlingBling);
+
+        // Lắng nghe thay đổi trong localStorage để tự động cập nhật
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'vinhDanhTop3') {
+                console.log('[VINH DANH] Phát hiện thay đổi dữ liệu trong localStorage');
+                if (loadHonorsData()) {
+                    currentIdx = 0; // Reset về người đầu tiên
+                    updatePlaque();
+                }
+            }
+        });
+
+        // Lắng nghe postMessage từ parent window
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'honorsDataUpdated') {
+                console.log('[VINH DANH] Nhận thông báo cập nhật từ parent');
+                if (loadHonorsData()) {
+                    currentIdx = 0; // Reset về người đầu tiên
+                    updatePlaque();
+                }
+            }
+        });
+
+        // Polling để kiểm tra thay đổi localStorage (backup mechanism)
+        let lastHonorsDataHash = '';
+        setInterval(() => {
+            try {
+                const currentData = localStorage.getItem('vinhDanhTop3');
+                if (currentData && currentData !== lastHonorsDataHash) {
+                    lastHonorsDataHash = currentData;
+                    console.log('[VINH DANH] Phát hiện thay đổi dữ liệu qua polling');
+                    if (loadHonorsData()) {
+                        currentIdx = 0; // Reset về người đầu tiên
+                        updatePlaque();
+                    }
+                }
+            } catch (e) {
+                console.error('[VINH DANH] Lỗi kiểm tra localStorage:', e);
+            }
+        }, 1000); // Kiểm tra mỗi giây
 
         document.addEventListener('DOMContentLoaded', () => {
             init();

@@ -223,8 +223,8 @@
 
         .main-title {
             font-family: 'Playfair Display', serif;
-            font-size: 5.5vh;
-            /* Giảm kích thước để hiển thị trên 1 dòng */
+            font-size: 4vh;
+            /* Bằng với sub-title (CỦA TUẦN) */
             font-weight: 900;
             text-transform: uppercase;
             line-height: 1.1;
@@ -480,7 +480,7 @@
                 if (filterSettingsStr) {
                     const filterSettings = JSON.parse(filterSettingsStr);
                     const type = filterSettings.periodType || 'week';
-                    
+
                     if (type === 'week') {
                         // Tính toán thời gian tuần dựa trên weekValue
                         const weekValue = filterSettings.periodValue || 'w1';
@@ -491,22 +491,22 @@
                             'w4': { date: new Date(2026, 0, 19) },
                             'w5': { date: new Date(2026, 0, 26) }
                         };
-                        
+
                         if (weekRanges[weekValue]) {
                             const weekDate = weekRanges[weekValue].date;
                             const day = weekDate.getDay();
                             const diff = day === 0 ? -6 : 1 - day;
                             const monday = new Date(weekDate);
                             monday.setDate(weekDate.getDate() + diff);
-                            
+
                             const sunday = new Date(monday);
                             sunday.setDate(monday.getDate() + 6);
-                            
+
                             const startDay = monday.getDate();
                             const startMonth = monday.getMonth() + 1;
                             const endDay = sunday.getDate();
                             const endMonth = sunday.getMonth() + 1;
-                            
+
                             return `Tuần ${weekValue.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
                         }
                     } else if (type === 'month') {
@@ -518,7 +518,7 @@
             } catch (e) {
                 console.error('[VINH DANH] Lỗi đọc filter settings:', e);
             }
-            
+
             // Fallback: sử dụng từ dữ liệu hoặc mặc định
             if (honorsData.length > 0 && honorsData[currentIdx] && honorsData[currentIdx].timeLabel) {
                 return honorsData[currentIdx].timeLabel;
@@ -588,7 +588,7 @@
         function init() {
             const params = new URLSearchParams(window.location.search);
             const isSlideshow = params.get('mode') === 'slideshow';
-            
+
             // Luôn load dữ liệu từ localStorage (không chỉ khi slideshow)
             if (loadHonorsData()) {
                 if (isSlideshow) {
@@ -683,7 +683,7 @@
         window.addEventListener('resize', createBlingBling);
 
         // Lắng nghe thay đổi trong localStorage để tự động cập nhật
-        window.addEventListener('storage', function(e) {
+        window.addEventListener('storage', function (e) {
             if (e.key === 'vinhDanhTop3') {
                 console.log('[VINH DANH] Phát hiện thay đổi dữ liệu trong localStorage');
                 if (loadHonorsData()) {
@@ -705,7 +705,7 @@
         });
 
         // Lắng nghe postMessage từ parent window
-        window.addEventListener('message', function(event) {
+        window.addEventListener('message', function (event) {
             if (event.data && event.data.type === 'honorsDataUpdated') {
                 console.log('[VINH DANH] Nhận thông báo cập nhật từ parent');
                 if (loadHonorsData()) {
@@ -740,7 +740,7 @@
                         updatePlaque();
                     }
                 }
-                
+
                 // Kiểm tra thay đổi filter settings
                 const currentFilter = localStorage.getItem('filterSettings');
                 if (currentFilter && currentFilter !== lastFilterHash) {

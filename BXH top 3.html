@@ -1098,7 +1098,7 @@
                 }
 
                 console.log('[LOAD DATA] Tổng số đơn sau khi load:', allOrders.length);
-                
+
                 if (allOrders.length === 0) {
                     console.warn("[LOAD DATA] API không trả về dữ liệu, dùng Demo Data");
                     loadDemoData();
@@ -1419,7 +1419,7 @@
             } catch (e) {
                 console.error('Lỗi đọc filter settings:', e);
             }
-            
+
             // Fallback về DOM nếu không có trong localStorage
             const type = filterSettings ? filterSettings.periodType : (document.getElementById('period-type') ? document.getElementById('period-type').value : 'week');
             const weekValue = filterSettings ? filterSettings.periodValue : (document.getElementById('period-value') ? document.getElementById('period-value').value : getCurrentWeek());
@@ -1432,7 +1432,7 @@
             const shouldFilterStatus = (type === 'month') || (type === 'week' && !isCurrentPeriod);
             const stats = calculateStats(start, end, shouldFilterStatus, isCurrentPeriod);
             currentStats = stats; // Lưu stats để dùng cho vinh danh
-            
+
             // Debug: Kiểm tra dữ liệu stats
             console.log('[UPDATE DATA] Stats received:', {
                 saleListLength: stats.saleList ? stats.saleList.length : 0,
@@ -1469,7 +1469,7 @@
                 saleListTop3: stats.saleList ? stats.saleList.slice(0, 3).map(s => s.name) : [],
                 mktListTop3: stats.mktList ? stats.mktList.slice(0, 3).map(m => m.name) : []
             });
-            
+
             renderList('sale-list', stats.saleList ? stats.saleList.slice(0, 3) : [], false);
             renderList('mkt-list', stats.mktList ? stats.mktList.slice(0, 3) : [], false);
 
@@ -1498,7 +1498,7 @@
             // Lưu dữ liệu toàn team và filter vào localStorage để "danh sách toàn team.html" sử dụng
             const saleListFull = [...(stats.saleListUnfiltered || stats.saleList)];
             const mktListFull = [...(stats.mktListUnfiltered || stats.mktList)];
-            
+
             // Tính lại percent cho từng list
             if (saleListFull.length > 0) {
                 const maxSale = saleListFull[0].rawVal;
@@ -1508,14 +1508,14 @@
                 const maxMkt = mktListFull[0].rawVal;
                 mktListFull.forEach(i => i.percent = maxMkt > 0 ? (i.rawVal / maxMkt) * 100 : 0);
             }
-            
+
             // Lưu dữ liệu team list
             localStorage.setItem('teamListData', JSON.stringify({
                 saleList: saleListFull,
                 mktList: mktListFull,
                 timeLabel: timeLabel
             }));
-            
+
             // Lưu filter settings (nếu chưa có trong localStorage)
             if (!filterSettings) {
                 const m = document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1;
@@ -1527,10 +1527,10 @@
                     year: y
                 }));
             }
-            
+
             // Tự động lưu dữ liệu vinh danh top 3 vào localStorage
             saveHonorsData();
-            
+
             // Trigger custom event để các iframe khác biết dữ liệu đã thay đổi
             try {
                 if (window.parent && window.parent !== window) {
@@ -1550,7 +1550,7 @@
         function checkIsCurrentPeriod(type, value) {
             const now = new Date();
             if (type === 'week') return value === getCurrentWeek();
-            
+
             // Đọc từ localStorage
             let filterSettings = null;
             try {
@@ -1558,8 +1558,8 @@
                 if (settingsStr) {
                     filterSettings = JSON.parse(settingsStr);
                 }
-            } catch (e) {}
-            
+            } catch (e) { }
+
             const m = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : now.getMonth() + 1);
             const y = filterSettings ? filterSettings.year : (document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : now.getFullYear());
             return (m === now.getMonth() + 1 && y === now.getFullYear());
@@ -1573,11 +1573,11 @@
             const monday = new Date(d);
             monday.setDate(d.getDate() + diff);
             monday.setHours(0, 0, 0, 0);
-            
+
             const sunday = new Date(monday);
             sunday.setDate(monday.getDate() + 6);
             sunday.setHours(23, 59, 59, 999);
-            
+
             return { start: monday, end: sunday };
         }
 
@@ -1590,7 +1590,7 @@
                 else if (value === 'w3') { weekStartDate = new Date(2026, 0, 12); } // Thứ 2
                 else if (value === 'w4') { weekStartDate = new Date(2026, 0, 19); } // Thứ 2
                 else { weekStartDate = new Date(2026, 0, 26); } // Thứ 2
-                
+
                 // Tính tuần từ ngày đó (bắt đầu thứ 2, kết thúc chủ nhật)
                 const weekRange = getWeekRange(weekStartDate);
                 start = weekRange.start;
@@ -1603,8 +1603,8 @@
                     if (settingsStr) {
                         filterSettings = JSON.parse(settingsStr);
                     }
-                } catch (e) {}
-                
+                } catch (e) { }
+
                 const m = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1);
                 const y = filterSettings ? filterSettings.year : (document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : new Date().getFullYear());
                 start = new Date(y, m - 1, 1);
@@ -1616,11 +1616,11 @@
         function getCurrentWeek() {
             const now = new Date();
             now.setHours(0, 0, 0, 0);
-            
+
             // Tính tuần hiện tại (bắt đầu từ thứ 2)
             const currentWeekRange = getWeekRange(now);
             const currentWeekStart = currentWeekRange.start;
-            
+
             // So sánh với các tuần đã định nghĩa (tính từ thứ 2)
             const weekRanges = [
                 { id: 'w1', date: new Date(2025, 11, 29) }, // Thứ 2
@@ -1629,14 +1629,14 @@
                 { id: 'w4', date: new Date(2026, 0, 19) }, // Thứ 2
                 { id: 'w5', date: new Date(2026, 0, 26) } // Thứ 2
             ];
-            
+
             for (let week of weekRanges) {
                 const weekRange = getWeekRange(week.date);
                 if (currentWeekStart.getTime() === weekRange.start.getTime()) {
                     return week.id;
                 }
             }
-            
+
             return 'w1'; // Mặc định
         }
 
@@ -1699,10 +1699,10 @@
                 console.error(`[RENDER] Element với id "${id}" không tồn tại`);
                 return;
             }
-            if (!data || !data.length) { 
+            if (!data || !data.length) {
                 console.warn(`[RENDER] Không có dữ liệu cho ${id}`);
-                el.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">Chưa có dữ liệu</div>'; 
-                return; 
+                el.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">Chưa có dữ liệu</div>';
+                return;
             }
             console.log(`[RENDER] Rendering ${id} với ${data.length} items`);
             if (isSmall) { renderMonthList(id, data); return; }
@@ -1773,12 +1773,17 @@
 
         function initApp() {
             populateYears();
-            
+
             // Kiểm tra query parameter để tự động set tháng hiện tại
             const urlParams = new URLSearchParams(window.location.search);
             const mode = urlParams.get('mode');
             const isMonthMode = mode === 'month';
-            
+
+            const currentDate = new Date();
+            const currentWeek = getCurrentWeek();
+            const currentMonth = currentDate.getMonth() + 1;
+            const currentYear = currentDate.getFullYear();
+
             // Load filter settings từ localStorage (được quản lý từ index.html)
             let filterSettings = null;
             try {
@@ -1789,13 +1794,9 @@
             } catch (e) {
                 console.error('Lỗi đọc filter settings:', e);
             }
-            
+
             // Nếu là mode=month, tự động set tháng hiện tại
             if (isMonthMode) {
-                const currentDate = new Date();
-                const currentMonth = currentDate.getMonth() + 1;
-                const currentYear = currentDate.getFullYear();
-                
                 // Set filter settings cho tháng hiện tại
                 const monthFilterSettings = {
                     periodType: 'month',
@@ -1803,21 +1804,14 @@
                     month: currentMonth,
                     year: currentYear
                 };
-                
+
                 // Lưu vào localStorage
                 localStorage.setItem('filterSettings', JSON.stringify(monthFilterSettings));
                 filterSettings = monthFilterSettings;
-                
+
                 console.log(`[BXH TOP 3 THÁNG] Tự động set tháng ${currentMonth}/${currentYear}`);
-            }
-            
-            // Set giá trị mặc định - nếu không có filterSettings, set về tuần hiện tại
-            if (!filterSettings) {
-                const currentDate = new Date();
-                const currentWeek = getCurrentWeek();
-                const currentMonth = currentDate.getMonth() + 1;
-                const currentYear = currentDate.getFullYear();
-                
+            } else {
+                // LUÔN ƯU TIÊN TUẦN HIỆN TẠI cho BXH top 3 tuần
                 // Tạo filter settings mặc định cho tuần hiện tại
                 filterSettings = {
                     periodType: 'week',
@@ -1825,12 +1819,12 @@
                     month: currentMonth,
                     year: currentYear
                 };
-                
+
                 // Lưu vào localStorage
                 localStorage.setItem('filterSettings', JSON.stringify(filterSettings));
-                console.log(`[BXH TOP 3] Tự động set về tuần hiện tại: ${currentWeek}`);
+                console.log(`[BXH TOP 3] Luôn set về tuần hiện tại: ${currentWeek}`);
             }
-            
+
             // Áp dụng filter settings
             if (document.getElementById('period-type')) {
                 document.getElementById('period-type').value = filterSettings.periodType || 'week';
@@ -1845,23 +1839,23 @@
                 document.getElementById('filter-year').value = filterSettings.year || new Date().getFullYear();
             }
             toggleFilterUI();
-            
+
             // Lắng nghe thay đổi filter từ parent window (index.html)
-            window.addEventListener('message', function(event) {
+            window.addEventListener('message', function (event) {
                 if (event.data && event.data.type === 'filterChanged') {
                     console.log('[BXH TOP 3] Nhận thông báo filter đã thay đổi, cập nhật dữ liệu...');
                     updateData();
                 }
             });
-            
+
             // Lắng nghe storage event
-            window.addEventListener('storage', function(e) {
+            window.addEventListener('storage', function (e) {
                 if (e.key === 'filterSettings') {
                     console.log('[BXH TOP 3] Filter settings đã thay đổi, cập nhật dữ liệu...');
                     updateData();
                 }
             });
-            
+
             // Polling để kiểm tra thay đổi filter (backup)
             let lastFilterHash = '';
             setInterval(() => {
@@ -1876,7 +1870,7 @@
                     console.error('Lỗi kiểm tra filter:', e);
                 }
             }, 1000);
-            
+
             loadData();
         }
 
@@ -1927,11 +1921,11 @@
             }
 
             // Sử dụng dữ liệu unfiltered nếu có, nếu không thì dùng filtered
-            const saleListToUse = currentStats.saleListUnfiltered && currentStats.saleListUnfiltered.length > 0 
-                ? currentStats.saleListUnfiltered 
+            const saleListToUse = currentStats.saleListUnfiltered && currentStats.saleListUnfiltered.length > 0
+                ? currentStats.saleListUnfiltered
                 : currentStats.saleList;
-            const mktListToUse = currentStats.mktListUnfiltered && currentStats.mktListUnfiltered.length > 0 
-                ? currentStats.mktListUnfiltered 
+            const mktListToUse = currentStats.mktListUnfiltered && currentStats.mktListUnfiltered.length > 0
+                ? currentStats.mktListUnfiltered
                 : currentStats.mktList;
 
             console.log('[VINH DANH] Sale list length:', saleListToUse ? saleListToUse.length : 0);

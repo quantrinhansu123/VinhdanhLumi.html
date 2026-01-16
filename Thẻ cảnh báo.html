@@ -193,41 +193,42 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
-        /* Gradient đỏ từ đậm đến nhạt cho thẻ cảnh báo - Đỏ đậm ở bên phải */
+
+        /* Viền đỏ cho thẻ cảnh báo - Đỏ đậm dần */
         .rank-item.warning-1 {
-            background: linear-gradient(to left, #fff, #a00000, #8b0000);
-            border: none;
-            box-shadow: 0 4px 15px rgba(139, 0, 0, 0.3);
+            background: #ffffff;
+            border: 4px solid #8b0000 !important;
+            box-shadow: 0 4px 15px rgba(139, 0, 0, 0.3), 0 0 20px rgba(139, 0, 0, 0.2);
         }
 
         .rank-item.warning-2 {
-            background: linear-gradient(to left, #fff, #c03030, #b22222);
-            border: none;
-            box-shadow: 0 4px 15px rgba(178, 34, 34, 0.25);
+            background: #ffffff;
+            border: 4px solid #b22222 !important;
+            box-shadow: 0 4px 15px rgba(178, 34, 34, 0.25), 0 0 15px rgba(178, 34, 34, 0.2);
         }
 
         .rank-item.warning-3 {
-            background: linear-gradient(to left, #fff, #e03050, #dc143c);
-            border: none;
-            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.2);
+            background: #ffffff;
+            border: 4px solid #dc143c !important;
+            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.2), 0 0 15px rgba(220, 20, 60, 0.15);
         }
 
         .rank-item.warning-4 {
-            background: linear-gradient(to left, #fff, #ff4444, #ff2222);
-            border: none;
-            box-shadow: 0 4px 15px rgba(255, 34, 34, 0.2);
+            background: #ffffff;
+            border: 3px solid #ff2222 !important;
+            box-shadow: 0 4px 15px rgba(255, 34, 34, 0.2), 0 0 10px rgba(255, 34, 34, 0.15);
         }
 
         .rank-item.warning-5 {
-            background: linear-gradient(to left, #fff, #ff6666, #ff4444);
-            border: none;
-            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.15);
+            background: #ffffff;
+            border: 3px solid #ff4444 !important;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.15), 0 0 10px rgba(255, 68, 68, 0.1);
         }
 
         .rank-item.warning-6 {
-            background: linear-gradient(to left, #fff, #ff8888, #ff6666);
-            border: none;
-            box-shadow: 0 4px 15px rgba(255, 102, 102, 0.15);
+            background: #ffffff;
+            border: 3px solid #ff6666 !important;
+            box-shadow: 0 4px 15px rgba(255, 102, 102, 0.15), 0 0 8px rgba(255, 102, 102, 0.1);
         }
 
         /* Avatar to hơn trong thẻ cảnh báo */
@@ -239,23 +240,28 @@
             margin-right: 1.5vw !important;
         }
 
-        /* Icon cảnh báo */
+        /* Icon cảnh báo - NHẤP NHÁY */
         .warning-icon {
             color: #dc3545;
             font-size: 2.5vw;
             margin-right: 1vw;
-            animation: pulse-warning 2s infinite;
-            filter: drop-shadow(0 0 5px rgba(220, 53, 69, 0.8));
+            animation: blink-warning 1s infinite;
+            filter: drop-shadow(0 0 8px rgba(220, 53, 69, 1));
         }
 
-        @keyframes pulse-warning {
-            0%, 100% {
-                transform: scale(1);
+        @keyframes blink-warning {
+
+            0%,
+            100% {
                 opacity: 1;
+                transform: scale(1);
+                filter: drop-shadow(0 0 8px rgba(220, 53, 69, 1));
             }
+
             50% {
-                transform: scale(1.1);
-                opacity: 0.8;
+                opacity: 0.3;
+                transform: scale(0.95);
+                filter: drop-shadow(0 0 3px rgba(220, 53, 69, 0.5));
             }
         }
 
@@ -280,38 +286,44 @@
         }
 
         .rank-item[class*="warning"] .name {
-            color: #FFD700; /* Màu vàng vàng nổi bật */
-            text-shadow: 
-                0 0 10px rgba(255, 215, 0, 0.5);
+            color: #dc3545;
+            /* Màu đỏ nổi bật */
+            text-shadow: 0 0 5px rgba(220, 53, 69, 0.3);
             font-weight: 900;
-            white-space: nowrap; /* Chữ nằm ngang, không xuống dòng */
-            overflow: visible !important; /* Không cắt chữ */
-            text-overflow: clip !important; /* Không dùng ellipsis */
+            white-space: nowrap;
+            /* Chữ nằm ngang, không xuống dòng */
+            overflow: visible !important;
+            /* Không cắt chữ */
+            text-overflow: clip !important;
+            /* Không dùng ellipsis */
             display: block;
             width: auto;
             min-width: fit-content;
         }
 
         .rank-item[class*="warning"] .stat-item {
-            color: #FFA500 !important; /* Màu vàng đậm (cam vàng) */
-            text-shadow: 
-                0 0 10px rgba(255, 165, 0, 0.8),
-                0 0 20px rgba(255, 165, 0, 0.5);
-            white-space: nowrap; /* Chữ nằm ngang, không xuống dòng */
-            overflow: visible !important; /* Không cắt chữ */
-            text-overflow: clip !important; /* Không dùng ellipsis */
+            color: #333 !important;
+            /* Màu đen cho số liệu */
+            text-shadow: none;
+            white-space: nowrap;
+            /* Chữ nằm ngang, không xuống dòng */
+            overflow: visible !important;
+            /* Không cắt chữ */
+            text-overflow: clip !important;
+            /* Không dùng ellipsis */
             font-weight: 900 !important;
-            font-size: 1.5vw !important; /* Chữ to hơn */
+            font-size: 1.5vw !important;
+            /* Chữ to hơn */
         }
-        
+
         /* Tỉ lệ chốt nổi bật đặc biệt */
         .rank-item[class*="warning"] .stat-item.close-rate-blink {
-            color: #FF8C00 !important; /* Màu vàng cam đậm */
-            text-shadow: 
-                0 0 15px rgba(255, 140, 0, 1),
-                0 0 25px rgba(255, 140, 0, 0.8);
+            color: #dc3545 !important;
+            /* Màu đỏ cho tỉ lệ chốt */
+            text-shadow: none;
             font-weight: 900 !important;
-            font-size: 1.6vw !important; /* Chữ to nhất */
+            font-size: 1.6vw !important;
+            /* Chữ to nhất */
         }
 
         .rank-pos {
@@ -804,8 +816,15 @@
         }
 
         @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
         }
 
         .close-rate-blink {
@@ -1380,51 +1399,51 @@
             // - Doanh số < 7 triệu x Số ngày từ đầu tháng (Ca ngày) HOẶC
             // - Doanh số < 8 triệu x Số ngày từ đầu tháng (Ca đêm)
             const beforeSaleFilter = saleList.length;
-            
+
             // Tính số ngày từ đầu tháng
             const now = new Date();
             const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const daysFromMonthStart = Math.floor((now - firstDayOfMonth) / (1000 * 60 * 60 * 24)) + 1;
-            
+
             // Tính threshold doanh số theo ca (sử dụng currentShift đã có)
             const saleThresholdDay = 7000000; // 7 triệu cho ca ngày
             const saleThresholdNight = 8000000; // 8 triệu cho ca đêm
             const saleThreshold = (currentShift === 'Ca ngày') ? saleThresholdDay : saleThresholdNight;
             const saleMinRevenue = saleThreshold * daysFromMonthStart;
-            
+
             saleList = saleList.filter(item => {
                 // Kiểm tra TLC < 5%
                 const closeRateValue = parseFloat(item.closeRate) || 0;
                 const hasLowCloseRate = item.totalMess > 0 && closeRateValue < 5;
-                
+
                 // Kiểm tra doanh số < threshold x số ngày
                 const hasLowRevenue = item.rawVal < saleMinRevenue;
-                
+
                 // Cảnh báo nếu một trong các điều kiện thỏa mãn
                 return hasLowCloseRate || hasLowRevenue;
             });
-            console.log(`[FILTER] Sale: ${beforeSaleFilter} → ${saleList.length} (Rule: TLC < 5% HOẶC Doanh số < ${(saleThreshold/1000000).toFixed(0)}tr x ${daysFromMonthStart} ngày = ${(saleMinRevenue/1000000).toFixed(1)}tr)`);
+            console.log(`[FILTER] Sale: ${beforeSaleFilter} → ${saleList.length} (Rule: TLC < 5% HOẶC Doanh số < ${(saleThreshold / 1000000).toFixed(0)}tr x ${daysFromMonthStart} ngày = ${(saleMinRevenue / 1000000).toFixed(1)}tr)`);
 
             // LỌC MKT: Rule mới - Cảnh báo nếu:
             // - ADS > 35% HOẶC
             // - Doanh số < 18 triệu x Số ngày từ đầu tháng
             const beforeMktFilter = mktList.length;
-            
+
             // Tính threshold doanh số MKT
             const mktThreshold = 18000000; // 18 triệu
             const mktMinRevenue = mktThreshold * daysFromMonthStart;
-            
+
             mktList = mktList.filter(item => {
                 // Kiểm tra ADS > 35%
                 const hasHighAdsRate = item.adsRate > 35;
-                
+
                 // Kiểm tra doanh số < threshold x số ngày
                 const hasLowRevenue = item.rawVal < mktMinRevenue;
-                
+
                 // Cảnh báo nếu một trong các điều kiện thỏa mãn
                 return hasHighAdsRate || hasLowRevenue;
             });
-            console.log(`[FILTER] MKT: ${beforeMktFilter} → ${mktList.length} (Rule: ADS > 35% HOẶC Doanh số < 18tr x ${daysFromMonthStart} ngày = ${(mktMinRevenue/1000000).toFixed(1)}tr)`);
+            console.log(`[FILTER] MKT: ${beforeMktFilter} → ${mktList.length} (Rule: ADS > 35% HOẶC Doanh số < 18tr x ${daysFromMonthStart} ngày = ${(mktMinRevenue / 1000000).toFixed(1)}tr)`);
 
             // SẮP XẾP LẠI SAU KHI LỌC: Từ thấp đến cao (doanh số thấp nhất lên đầu)
             saleList.sort((a, b) => a.rawVal - b.rawVal);
@@ -1451,7 +1470,7 @@
             } catch (e) {
                 console.error('Lỗi đọc filter settings:', e);
             }
-            
+
             // Fallback về DOM nếu không có trong localStorage
             const type = filterSettings ? filterSettings.periodType : (document.getElementById('period-type') ? document.getElementById('period-type').value : 'week');
             const weekValue = filterSettings ? filterSettings.periodValue : (document.getElementById('period-value') ? document.getElementById('period-value').value : getCurrentWeek());
@@ -1494,7 +1513,7 @@
         function checkIsCurrentPeriod(type, value) {
             const now = new Date();
             if (type === 'week') return value === getCurrentWeek();
-            
+
             // Đọc từ localStorage
             let filterSettings = null;
             try {
@@ -1502,8 +1521,8 @@
                 if (settingsStr) {
                     filterSettings = JSON.parse(settingsStr);
                 }
-            } catch (e) {}
-            
+            } catch (e) { }
+
             const m = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : now.getMonth() + 1);
             const y = filterSettings ? filterSettings.year : (document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : now.getFullYear());
             return (m === now.getMonth() + 1 && y === now.getFullYear());
@@ -1517,11 +1536,11 @@
             const monday = new Date(d);
             monday.setDate(d.getDate() + diff);
             monday.setHours(0, 0, 0, 0);
-            
+
             const sunday = new Date(monday);
             sunday.setDate(monday.getDate() + 6);
             sunday.setHours(23, 59, 59, 999);
-            
+
             return { start: monday, end: sunday };
         }
 
@@ -1534,7 +1553,7 @@
                 else if (value === 'w3') { weekStartDate = new Date(2026, 0, 12); } // Thứ 2
                 else if (value === 'w4') { weekStartDate = new Date(2026, 0, 19); } // Thứ 2
                 else { weekStartDate = new Date(2026, 0, 26); } // Thứ 2
-                
+
                 // Tính tuần từ ngày đó (bắt đầu thứ 2, kết thúc chủ nhật)
                 const weekRange = getWeekRange(weekStartDate);
                 start = weekRange.start;
@@ -1547,8 +1566,8 @@
                     if (settingsStr) {
                         filterSettings = JSON.parse(settingsStr);
                     }
-                } catch (e) {}
-                
+                } catch (e) { }
+
                 const m = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1);
                 const y = filterSettings ? filterSettings.year : (document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : new Date().getFullYear());
                 start = new Date(y, m - 1, 1);
@@ -1560,11 +1579,11 @@
         function getCurrentWeek() {
             const now = new Date();
             now.setHours(0, 0, 0, 0);
-            
+
             // Tính tuần hiện tại (bắt đầu từ thứ 2)
             const currentWeekRange = getWeekRange(now);
             const currentWeekStart = currentWeekRange.start;
-            
+
             // So sánh với các tuần đã định nghĩa (tính từ thứ 2)
             const weekRanges = [
                 { id: 'w1', date: new Date(2025, 11, 29) }, // Thứ 2
@@ -1573,21 +1592,31 @@
                 { id: 'w4', date: new Date(2026, 0, 19) }, // Thứ 2
                 { id: 'w5', date: new Date(2026, 0, 26) } // Thứ 2
             ];
-            
+
             for (let week of weekRanges) {
                 const weekRange = getWeekRange(week.date);
                 if (currentWeekStart.getTime() === weekRange.start.getTime()) {
                     return week.id;
                 }
             }
-            
+
             return 'w1'; // Mặc định
         }
 
         function toggleFilterUI() {
-            const type = document.getElementById('period-type').value;
-            document.getElementById('week-filter-container').style.display = type === 'week' ? 'block' : 'none';
-            document.getElementById('month-filter-container').style.display = type === 'month' ? 'flex' : 'none';
+            const periodTypeEl = document.getElementById('period-type');
+            if (!periodTypeEl) return; // Elements không tồn tại (đã bị ẩn), bỏ qua
+
+            const type = periodTypeEl.value;
+            const weekContainer = document.getElementById('week-filter-container');
+            const monthContainer = document.getElementById('month-filter-container');
+
+            if (weekContainer) {
+                weekContainer.style.display = type === 'week' ? 'block' : 'none';
+            }
+            if (monthContainer) {
+                monthContainer.style.display = type === 'month' ? 'flex' : 'none';
+            }
 
             // Tự động điều chỉnh năm khi chọn tháng
             if (type === 'month') {
@@ -1598,6 +1627,7 @@
 
         function populateYears() {
             const sel = document.getElementById('filter-year');
+            if (!sel) return; // Element không tồn tại (đã bị ẩn), bỏ qua
             const cy = new Date().getFullYear();
             for (let y = cy - 1; y <= cy + 1; y++) {
                 let opt = document.createElement('option');
@@ -1628,7 +1658,7 @@
                 const startMonth = weekRange.start.getMonth() + 1;
                 const endDay = weekRange.end.getDate();
                 const endMonth = weekRange.end.getMonth() + 1;
-                
+
                 const opt = document.createElement('option');
                 opt.value = week.id;
                 opt.textContent = `Tuần ${week.id.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
@@ -1638,8 +1668,12 @@
 
         // Hàm tự động điều chỉnh năm khi chọn tháng
         function adjustYearForMonth() {
-            const selectedMonth = parseInt(document.getElementById('filter-month').value);
-            const selectedYear = parseInt(document.getElementById('filter-year').value);
+            const monthEl = document.getElementById('filter-month');
+            const yearEl = document.getElementById('filter-year');
+            if (!monthEl || !yearEl) return; // Elements không tồn tại, bỏ qua
+
+            const selectedMonth = parseInt(monthEl.value);
+            const selectedYear = parseInt(yearEl.value);
             const currentDate = new Date();
             const currentMonth = currentDate.getMonth() + 1; // 1-12
             const currentYear = currentDate.getFullYear();
@@ -1647,7 +1681,7 @@
             // Nếu chọn tháng lớn hơn tháng hiện tại và đang chọn năm hiện tại
             // => Tự động chuyển về năm trước (vì tháng đó chưa đến)
             if (selectedMonth > currentMonth && selectedYear === currentYear) {
-                document.getElementById('filter-year').value = currentYear - 1;
+                yearEl.value = currentYear - 1;
                 console.log(`Tự động chuyển từ tháng ${selectedMonth}/${currentYear} sang tháng ${selectedMonth}/${currentYear - 1}`);
             }
         }
@@ -1668,7 +1702,41 @@
 
         function renderList(id, data, isSmall) {
             const el = document.getElementById(id);
-            if (!data.length) { el.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">Chưa có dữ liệu</div>'; return; }
+
+            // Nếu không có dữ liệu, hiển thị thông báo kèm rule
+            if (!data.length) {
+                const isSaleBoard = id.includes('sale');
+                const isMktBoard = id.includes('mkt');
+
+                let ruleText = '';
+                if (isSaleBoard) {
+                    // Tính threshold dựa trên số ngày trong tháng
+                    const now = new Date();
+                    const daysFromMonthStart = now.getDate();
+                    const saleThreshold = 15000000; // 15 triệu
+                    const saleMinRevenue = saleThreshold * daysFromMonthStart;
+                    ruleText = `Điều kiện cảnh báo Sale: Tỷ lệ chốt < 5% HOẶC Doanh số < ${(saleMinRevenue / 1000000).toFixed(1)} triệu (${(saleThreshold / 1000000)}tr × ${daysFromMonthStart} ngày)`;
+                } else if (isMktBoard) {
+                    const now = new Date();
+                    const daysFromMonthStart = now.getDate();
+                    const mktThreshold = 18000000; // 18 triệu
+                    const mktMinRevenue = mktThreshold * daysFromMonthStart;
+                    ruleText = `Điều kiện cảnh báo MKT: ADS Rate > 35% HOẶC Doanh số < ${(mktMinRevenue / 1000000).toFixed(1)} triệu (${(mktThreshold / 1000000)}tr × ${daysFromMonthStart} ngày)`;
+                }
+
+                el.innerHTML = `
+                    <div style="text-align:center; padding: 3vh 2vw; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-radius: 12px; border: 2px solid #28a745; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);">
+                        <div style="font-size: 2vw; color: #28a745; font-weight: 900; margin-bottom: 1vh;">
+                            <i class="fa-solid fa-circle-check" style="margin-right: 0.5vw;"></i>
+                            Không có nhân sự thỏa mãn điều kiện cảnh báo
+                        </div>
+                        <div style="font-size: 0.9vw; color: #155724; font-weight: 600; line-height: 1.6;">
+                            ${ruleText}
+                        </div>
+                    </div>`;
+                return;
+            }
+
             if (isSmall) { renderMonthList(id, data); return; }
 
             const isSaleBoard = id.includes('sale');
@@ -1759,7 +1827,7 @@
         function initApp() {
             populateYears();
             populateWeekOptions(); // Cập nhật các option tuần với thời gian thực tế
-            
+
             // Load filter settings từ localStorage (được quản lý từ index.html)
             let filterSettings = null;
             try {
@@ -1770,14 +1838,14 @@
             } catch (e) {
                 console.error('Lỗi đọc filter settings:', e);
             }
-            
+
             // Set giá trị mặc định - nếu không có filterSettings, set về tuần hiện tại
             if (!filterSettings) {
                 const currentDate = new Date();
                 const currentWeek = getCurrentWeek();
                 const currentMonth = currentDate.getMonth() + 1;
                 const currentYear = currentDate.getFullYear();
-                
+
                 // Tạo filter settings mặc định cho tuần hiện tại
                 filterSettings = {
                     periodType: 'week',
@@ -1785,12 +1853,12 @@
                     month: currentMonth,
                     year: currentYear
                 };
-                
+
                 // Lưu vào localStorage
                 localStorage.setItem('filterSettings', JSON.stringify(filterSettings));
                 console.log(`[THẺ CẢNH BÁO] Tự động set về tuần hiện tại: ${currentWeek}`);
             }
-            
+
             // Áp dụng filter settings
             if (document.getElementById('period-type')) {
                 document.getElementById('period-type').value = filterSettings.periodType || 'week';
@@ -1805,23 +1873,23 @@
                 document.getElementById('filter-year').value = filterSettings.year || new Date().getFullYear();
             }
             toggleFilterUI();
-            
+
             // Lắng nghe thay đổi filter từ parent window (index.html)
-            window.addEventListener('message', function(event) {
+            window.addEventListener('message', function (event) {
                 if (event.data && event.data.type === 'filterChanged') {
                     console.log('[THẺ CẢNH BÁO] Nhận thông báo filter đã thay đổi, cập nhật dữ liệu...');
                     updateData();
                 }
             });
-            
+
             // Lắng nghe storage event
-            window.addEventListener('storage', function(e) {
+            window.addEventListener('storage', function (e) {
                 if (e.key === 'filterSettings') {
                     console.log('[THẺ CẢNH BÁO] Filter settings đã thay đổi, cập nhật dữ liệu...');
                     updateData();
                 }
             });
-            
+
             // Polling để kiểm tra thay đổi filter (backup)
             let lastFilterHash = '';
             setInterval(() => {
@@ -1836,7 +1904,7 @@
                     console.error('Lỗi kiểm tra filter:', e);
                 }
             }, 1000);
-            
+
             loadData();
         }
 

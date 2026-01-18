@@ -55,13 +55,13 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding: 0.5vh 1.5vw;
-            margin-bottom: 0.5vh;
+            padding: 0.3vh 1vw;
+            margin-bottom: 0.3vh;
             position: relative;
         }
 
         .lumi-logo {
-            height: 6vh;
+            height: 3.5vh;
             width: auto;
             object-fit: contain;
             mix-blend-mode: multiply;
@@ -71,7 +71,7 @@
         .lumi-brand {
             font-family: 'Montserrat', sans-serif;
             font-weight: 900;
-            font-size: 2.8vw;
+            font-size: 1.8vw;
             background: linear-gradient(to right, #11998e, #38ef7d);
             -webkit-background-clip: text;
             background-clip: text;
@@ -81,11 +81,11 @@
         }
 
         .lumi-subtitle {
-            font-size: 1vw;
+            font-size: 0.7vw;
             color: var(--text-secondary);
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
         }
 
         .date-range-display {
@@ -707,46 +707,6 @@
             </div>
         </div>
 
-        <!-- BỘ LỌC ĐÃ ĐƯỢC DI CHUYỂN LÊN INDEX.HTML - ẨN Ở ĐÂY -->
-        <div style="display: none;">
-            <!-- CHỌN LOẠI THỜI GIAN -->
-            <select class="filter-select" id="period-type" onchange="toggleFilterUI()">
-                <option value="week">Theo Tuần</option>
-                <option value="month">Theo Tháng</option>
-            </select>
-
-            <!-- CHỌN TUẦN -->
-            <div id="week-filter-container">
-                <select class="filter-select" id="period-value" onchange="updateData()">
-                    <option value="w1">Tuần 1 (28/12 - 3/1)</option>
-                    <option value="w2">Tuần 2 (4/1 - 10/1)</option>
-                    <option value="w3">Tuần 3 (11/1 - 17/1)</option>
-                    <option value="w4">Tuần 4 (18/1 - 24/1)</option>
-                    <option value="w5">Tuần 5 (25/1 - 31/1)</option>
-                </select>
-            </div>
-
-            <!-- CHỌN THÁNG & NĂM -->
-            <div id="month-filter-container" style="display: none; gap: 5px;">
-                <select class="filter-select" id="filter-month" onchange="adjustYearForMonth(); updateData();">
-                    <option value="1">Tháng 1</option>
-                    <option value="2">Tháng 2</option>
-                    <option value="3">Tháng 3</option>
-                    <option value="4">Tháng 4</option>
-                    <option value="5">Tháng 5</option>
-                    <option value="6">Tháng 6</option>
-                    <option value="7">Tháng 7</option>
-                    <option value="8">Tháng 8</option>
-                    <option value="9">Tháng 9</option>
-                    <option value="10">Tháng 10</option>
-                    <option value="11">Tháng 11</option>
-                    <option value="12">Tháng 12</option>
-                </select>
-                <select class="filter-select" id="filter-year" onchange="updateData()">
-                    <!-- JS sẽ điền năm -->
-                </select>
-            </div>
-        </div>
     </div>
 
     <!-- MAIN BOARDS -->
@@ -1243,10 +1203,13 @@
 
             // Debug: In khoảng thời gian đang lọc
             console.log(`[KHOẢNG THỜI GIAN] ${startDate.toLocaleDateString('vi-VN')} → ${endDate.toLocaleDateString('vi-VN')}`);
+            console.log(`[CALCULATE STATS] saleMap keys count: ${Object.keys(saleMap).length}, mktMap keys count: ${Object.keys(mktMap).length}`);
 
             let saleList = Object.keys(saleMap).map(name => ({
                 name, rawVal: saleMap[name], value: formatMoney(saleMap[name]), avatar: getAvatar(name)
             })).sort((a, b) => b.rawVal - a.rawVal);
+            
+            console.log(`[CALCULATE STATS] saleList after initial creation: ${saleList.length} items`);
 
             // --------------------------------------------------------------------------------
             // BỘ LỌC CƠ BẢN + LỌC MẠNH TAY "PAGE" VÀ "MCN" NGAY TỪ NGUỒN
@@ -1279,6 +1242,8 @@
                 name, rawVal: mktMap[name], value: formatMoney(mktMap[name]), avatar: getAvatar(name)
             })).sort((a, b) => b.rawVal - a.rawVal);
 
+            console.log(`[CALCULATE STATS] mktList after initial creation: ${mktList.length} items`);
+
             // Debug: In tổng doanh số của Mạnh Cường
             Object.keys(mktMap).forEach(name => {
                 if (name.toLowerCase().includes("mạnh cường") || name.toLowerCase().includes("manh cuong")) {
@@ -1287,7 +1252,9 @@
             });
 
             // ÁP DỤNG LỌC MẠNH TAY CHO MKT LUÔN
+            const beforeAggressiveFilterMkt = mktList.length;
             mktList = mktList.filter(aggressiveFilter);
+            console.log(`[CALCULATE STATS] mktList after aggressiveFilter: ${beforeAggressiveFilterMkt} → ${mktList.length}`);
 
             if (mktList.length > 0) {
                 const max = mktList[0].rawVal;
@@ -1348,9 +1315,37 @@
                 item.displayRate = item.adsRate.toFixed(1) + "%";
             });
 
-            // LƯU BẢN SAO TRƯỚC KHI LỌC (để dùng cho BXH Toàn Team)
-            const saleListUnfiltered = [...saleList];
-            const mktListUnfiltered = [...mktList];
+            // SẮP XẾP LẠI TRƯỚC KHI LỌC để đảm bảo thứ tự đúng
+            saleList.sort((a, b) => b.rawVal - a.rawVal);
+            mktList.sort((a, b) => b.rawVal - a.rawVal);
+            console.log(`[SORT] Đã sắp xếp lại Sale và MKT theo doanh số giảm dần`);
+
+            // LƯU BẢN SAO TRƯỚC KHI LỌC (để dùng cho BXH Toàn Team) - SAU KHI ĐÃ SẮP XẾP
+            // Tạo deep copy để đảm bảo không bị ảnh hưởng bởi các filter sau
+            const saleListUnfiltered = saleList.map(item => ({
+                name: item.name,
+                rawVal: item.rawVal,
+                value: item.value,
+                avatar: item.avatar,
+                percent: item.percent,
+                totalMess: item.totalMess,
+                totalOrders: item.totalOrders,
+                closeRate: item.closeRate,
+                doanhthu: item.doanhthu
+            }));
+            const mktListUnfiltered = mktList.map(item => ({
+                name: item.name,
+                rawVal: item.rawVal,
+                value: item.value,
+                avatar: item.avatar,
+                percent: item.percent,
+                cpqc: item.cpqc,
+                doanhthu: item.doanhthu,
+                adsRate: item.adsRate,
+                displayRate: item.displayRate
+            }));
+            
+            console.log(`[CALCULATE STATS] Created unfiltered copies: saleListUnfiltered=${saleListUnfiltered.length}, mktListUnfiltered=${mktListUnfiltered.length}`);
 
             // LỌC SALE: CHỈ ÁP DỤNG KHI KHÔNG PHẢI TUẦN HIỆN TẠI
             // Loại bỏ những người có Close Rate < 9%
@@ -1397,7 +1392,15 @@
             // SẮP XẾP LẠI SAU KHI LỌC để đảm bảo thứ tự đúng
             saleList.sort((a, b) => b.rawVal - a.rawVal);
             mktList.sort((a, b) => b.rawVal - a.rawVal);
-            console.log(`[SORT] Đã sắp xếp lại Sale và MKT theo doanh số giảm dần`);
+            console.log(`[SORT] Đã sắp xếp lại Sale và MKT sau khi lọc theo doanh số giảm dần`);
+
+            // Debug: Kiểm tra dữ liệu unfiltered
+            console.log(`[CALCULATE STATS] Unfiltered lists:`, {
+                saleListUnfilteredLength: saleListUnfiltered.length,
+                mktListUnfilteredLength: mktListUnfiltered.length,
+                saleListLength: saleList.length,
+                mktListLength: mktList.length
+            });
 
             return {
                 saleList,           // Đã lọc - dùng cho top 3
@@ -1496,8 +1499,51 @@
 
 
             // Lưu dữ liệu toàn team và filter vào localStorage để "danh sách toàn team.html" sử dụng
-            const saleListFull = [...(stats.saleListUnfiltered || stats.saleList)];
-            const mktListFull = [...(stats.mktListUnfiltered || stats.mktList)];
+            // QUAN TRỌNG: "danh sách toàn team.html" phải theo filter thời gian từ index.html
+            // Sử dụng dữ liệu unfiltered (toàn bộ team) từ filter hiện tại
+            let saleListFull = [];
+            let mktListFull = [];
+            
+            // Ưu tiên dùng unfiltered (toàn bộ team), nếu không có thì dùng filtered (đã lọc)
+            if (stats.saleListUnfiltered && stats.saleListUnfiltered.length > 0) {
+                saleListFull = stats.saleListUnfiltered.map(item => ({ ...item }));
+                console.log('[SAVE TEAM LIST DATA] Using saleListUnfiltered:', saleListFull.length);
+            } else if (stats.saleList && stats.saleList.length > 0) {
+                saleListFull = stats.saleList.map(item => ({ ...item }));
+                console.log('[SAVE TEAM LIST DATA] Fallback to saleList:', saleListFull.length);
+            } else {
+                console.warn('[SAVE TEAM LIST DATA] No sale data available!');
+            }
+            
+            if (stats.mktListUnfiltered && stats.mktListUnfiltered.length > 0) {
+                mktListFull = stats.mktListUnfiltered.map(item => ({ ...item }));
+                console.log('[SAVE TEAM LIST DATA] Using mktListUnfiltered:', mktListFull.length);
+            } else if (stats.mktList && stats.mktList.length > 0) {
+                mktListFull = stats.mktList.map(item => ({ ...item }));
+                console.log('[SAVE TEAM LIST DATA] Fallback to mktList:', mktListFull.length);
+            } else {
+                console.warn('[SAVE TEAM LIST DATA] No mkt data available!');
+            }
+            
+            console.log('[SAVE TEAM LIST DATA] Lưu dữ liệu theo filter:', {
+                filterType: type,
+                filterValue: weekValue,
+                timeLabel: timeLabel,
+                saleListFullLength: saleListFull.length,
+                mktListFullLength: mktListFull.length
+            });
+
+            // Debug: Kiểm tra dữ liệu trước khi lưu
+            console.log('[SAVE TEAM LIST DATA] Before saving:', {
+                saleListUnfilteredLength: stats.saleListUnfiltered ? stats.saleListUnfiltered.length : 0,
+                mktListUnfilteredLength: stats.mktListUnfiltered ? stats.mktListUnfiltered.length : 0,
+                saleListLength: stats.saleList ? stats.saleList.length : 0,
+                mktListLength: stats.mktList ? stats.mktList.length : 0,
+                saleListFullLength: saleListFull.length,
+                mktListFullLength: mktListFull.length,
+                saleListFullSample: saleListFull.length > 0 ? saleListFull[0] : null,
+                mktListFullSample: mktListFull.length > 0 ? mktListFull[0] : null
+            });
 
             // Tính lại percent cho từng list
             if (saleListFull.length > 0) {
@@ -1509,12 +1555,53 @@
                 mktListFull.forEach(i => i.percent = maxMkt > 0 ? (i.rawVal / maxMkt) * 100 : 0);
             }
 
-            // Lưu dữ liệu team list
-            localStorage.setItem('teamListData', JSON.stringify({
-                saleList: saleListFull,
-                mktList: mktListFull,
-                timeLabel: timeLabel
-            }));
+            // Lưu dữ liệu team list - CHỈ LƯU KHI CÓ DỮ LIỆU
+            // QUAN TRỌNG: Luôn lưu dữ liệu theo filter hiện tại để "danh sách toàn team.html" theo filter
+            if (saleListFull.length > 0 || mktListFull.length > 0) {
+                const teamListDataToSave = {
+                    saleList: saleListFull,
+                    mktList: mktListFull,
+                    timeLabel: timeLabel
+                };
+                console.log('[SAVE TEAM LIST DATA] Saving to localStorage:', {
+                    saleListCount: teamListDataToSave.saleList.length,
+                    mktListCount: teamListDataToSave.mktList.length,
+                    timeLabel: teamListDataToSave.timeLabel,
+                    saleListFirstItem: teamListDataToSave.saleList.length > 0 ? teamListDataToSave.saleList[0] : null,
+                    mktListFirstItem: teamListDataToSave.mktList.length > 0 ? teamListDataToSave.mktList[0] : null
+                });
+                localStorage.setItem('teamListData', JSON.stringify(teamListDataToSave));
+                console.log('[SAVE TEAM LIST DATA] ✅ Đã lưu thành công vào localStorage');
+            } else {
+                // Kiểm tra xem có dữ liệu cũ trong localStorage không
+                const existingData = localStorage.getItem('teamListData');
+                if (existingData) {
+                    try {
+                        const existing = JSON.parse(existingData);
+                        if (existing.saleList && existing.saleList.length > 0 || existing.mktList && existing.mktList.length > 0) {
+                            console.warn('[SAVE TEAM LIST DATA] ⚠️ Dữ liệu mới rỗng, giữ nguyên dữ liệu cũ trong localStorage');
+                            return; // Không ghi đè dữ liệu cũ
+                        }
+                    } catch (e) {
+                        console.error('[SAVE TEAM LIST DATA] Lỗi đọc dữ liệu cũ:', e);
+                    }
+                }
+                
+                console.error('[SAVE TEAM LIST DATA] ❌ KHÔNG CÓ DỮ LIỆU ĐỂ LƯU! Cả saleListFull và mktListFull đều rỗng!');
+                console.error('[SAVE TEAM LIST DATA] Stats object:', {
+                    hasSaleListUnfiltered: !!stats.saleListUnfiltered,
+                    saleListUnfilteredLength: stats.saleListUnfiltered ? stats.saleListUnfiltered.length : 0,
+                    hasSaleList: !!stats.saleList,
+                    saleListLength: stats.saleList ? stats.saleList.length : 0,
+                    hasMktListUnfiltered: !!stats.mktListUnfiltered,
+                    mktListUnfilteredLength: stats.mktListUnfiltered ? stats.mktListUnfiltered.length : 0,
+                    hasMktList: !!stats.mktList,
+                    mktListLength: stats.mktList ? stats.mktList.length : 0,
+                    filterType: type,
+                    filterValue: weekValue,
+                    dateRange: `${start.toLocaleDateString('vi-VN')} - ${end.toLocaleDateString('vi-VN')}`
+                });
+            }
 
             // Lưu filter settings (nếu chưa có trong localStorage)
             if (!filterSettings) {
@@ -1641,9 +1728,20 @@
         }
 
         function toggleFilterUI() {
-            const type = document.getElementById('period-type').value;
-            document.getElementById('week-filter-container').style.display = type === 'week' ? 'block' : 'none';
-            document.getElementById('month-filter-container').style.display = type === 'month' ? 'flex' : 'none';
+            const periodTypeEl = document.getElementById('period-type');
+            if (!periodTypeEl) {
+                // Filter elements không tồn tại vì đang dùng filter từ index.html
+                return;
+            }
+            const type = periodTypeEl.value;
+            const weekContainer = document.getElementById('week-filter-container');
+            const monthContainer = document.getElementById('month-filter-container');
+            if (weekContainer) {
+                weekContainer.style.display = type === 'week' ? 'block' : 'none';
+            }
+            if (monthContainer) {
+                monthContainer.style.display = type === 'month' ? 'flex' : 'none';
+            }
 
             // Tự động điều chỉnh năm khi chọn tháng
             if (type === 'month') {
@@ -1654,6 +1752,11 @@
 
         function populateYears() {
             const sel = document.getElementById('filter-year');
+            if (!sel) {
+                // Filter elements không tồn tại vì đang dùng filter từ index.html
+                console.log('[BXH TOP 3] Filter elements không tồn tại, bỏ qua populateYears()');
+                return;
+            }
             const cy = new Date().getFullYear();
             for (let y = cy - 1; y <= cy + 1; y++) {
                 let opt = document.createElement('option');
@@ -1665,8 +1768,14 @@
 
         // Hàm tự động điều chỉnh năm khi chọn tháng
         function adjustYearForMonth() {
-            const selectedMonth = parseInt(document.getElementById('filter-month').value);
-            const selectedYear = parseInt(document.getElementById('filter-year').value);
+            const monthEl = document.getElementById('filter-month');
+            const yearEl = document.getElementById('filter-year');
+            if (!monthEl || !yearEl) {
+                // Filter elements không tồn tại vì đang dùng filter từ index.html
+                return;
+            }
+            const selectedMonth = parseInt(monthEl.value);
+            const selectedYear = parseInt(yearEl.value);
             const currentDate = new Date();
             const currentMonth = currentDate.getMonth() + 1; // 1-12
             const currentYear = currentDate.getFullYear();
@@ -1674,7 +1783,7 @@
             // Nếu chọn tháng lớn hơn tháng hiện tại và đang chọn năm hiện tại
             // => Tự động chuyển về năm trước (vì tháng đó chưa đến)
             if (selectedMonth > currentMonth && selectedYear === currentYear) {
-                document.getElementById('filter-year').value = currentYear - 1;
+                yearEl.value = currentYear - 1;
                 console.log(`Tự động chuyển từ tháng ${selectedMonth}/${currentYear} sang tháng ${selectedMonth}/${currentYear - 1}`);
             }
         }
@@ -1913,21 +2022,26 @@
 
         function closeTeamModal() { document.getElementById('teamModal').style.display = 'none'; }
 
-        // Hàm tự động lưu dữ liệu vinh danh vào localStorage (gọi tự động mỗi khi updateData)
+        // Hàm tự động lưu dữ liệu vinh danh vào localStorage (LUÔN LẤY THEO TUẦN)
         function saveHonorsData() {
-            if (!currentStats) {
-                console.warn('[VINH DANH] Chưa có dữ liệu stats để lưu');
-                return;
-            }
-
+            // VINH DANH TOP 3 LUÔN LẤY THEO TUẦN HIỆN TẠI, không phụ thuộc vào filter settings
+            const currentWeek = getCurrentWeek();
+            const { start, end } = getDateRange('week', currentWeek);
+            const isCurrentWeek = checkIsCurrentPeriod('week', currentWeek);
+            
+            // Tính toán lại stats theo tuần hiện tại
+            const shouldFilterStatus = !isCurrentWeek; // Tuần hiện tại: không lọc, tuần đã qua: lọc
+            const weekStats = calculateStats(start, end, shouldFilterStatus, isCurrentWeek);
+            
             // Sử dụng dữ liệu unfiltered nếu có, nếu không thì dùng filtered
-            const saleListToUse = currentStats.saleListUnfiltered && currentStats.saleListUnfiltered.length > 0
-                ? currentStats.saleListUnfiltered
-                : currentStats.saleList;
-            const mktListToUse = currentStats.mktListUnfiltered && currentStats.mktListUnfiltered.length > 0
-                ? currentStats.mktListUnfiltered
-                : currentStats.mktList;
+            const saleListToUse = weekStats.saleListUnfiltered && weekStats.saleListUnfiltered.length > 0
+                ? weekStats.saleListUnfiltered
+                : weekStats.saleList;
+            const mktListToUse = weekStats.mktListUnfiltered && weekStats.mktListUnfiltered.length > 0
+                ? weekStats.mktListUnfiltered
+                : weekStats.mktList;
 
+            console.log('[VINH DANH] Tính toán lại theo tuần hiện tại:', currentWeek);
             console.log('[VINH DANH] Sale list length:', saleListToUse ? saleListToUse.length : 0);
             console.log('[VINH DANH] MKT list length:', mktListToUse ? mktListToUse.length : 0);
 
@@ -1946,6 +2060,26 @@
             const topSale = sortedSaleList.slice(0, 3);
             const topMkt = sortedMktList.slice(0, 3);
 
+            // Tạo timeLabel cho tuần hiện tại
+            const weekRanges = [
+                { id: 'w1', date: new Date(2025, 11, 29) },
+                { id: 'w2', date: new Date(2026, 0, 5) },
+                { id: 'w3', date: new Date(2026, 0, 12) },
+                { id: 'w4', date: new Date(2026, 0, 19) },
+                { id: 'w5', date: new Date(2026, 0, 26) }
+            ];
+            
+            let timeLabel = 'Tuần hiện tại';
+            const weekInfo = weekRanges.find(w => w.id === currentWeek);
+            if (weekInfo) {
+                const weekRange = getWeekRange(weekInfo.date);
+                const startDay = weekRange.start.getDate();
+                const startMonth = weekRange.start.getMonth() + 1;
+                const endDay = weekRange.end.getDate();
+                const endMonth = weekRange.end.getMonth() + 1;
+                timeLabel = `Tuần ${currentWeek.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
+            }
+
             // Tạo dữ liệu vinh danh theo format của Vinh danh top 3.html
             const honorsData = [];
 
@@ -1956,7 +2090,7 @@
                     name: person.name,
                     avatar: person.avatar,
                     value: person.value,
-                    timeLabel: currentStats.timeLabel || 'Tuần hiện tại',
+                    timeLabel: timeLabel,
                     dept: 'SALE',
                     closeRate: person.closeRate || '0%',
                     teamName: 'Bộ phận Sale'
@@ -1970,7 +2104,7 @@
                     name: person.name,
                     avatar: person.avatar,
                     value: person.value,
-                    timeLabel: currentStats.timeLabel || 'Tuần hiện tại',
+                    timeLabel: timeLabel,
                     dept: 'MKT',
                     displayRate: person.displayRate || '0%',
                     teamName: 'Bộ phận Marketing'
@@ -1978,7 +2112,7 @@
             });
 
             if (honorsData.length > 0) {
-                console.log('[VINH DANH] Tự động lưu dữ liệu vinh danh:', honorsData);
+                console.log('[VINH DANH] Tự động lưu dữ liệu vinh danh theo tuần:', honorsData);
                 // Lưu vào localStorage
                 localStorage.setItem('vinhDanhTop3', JSON.stringify(honorsData));
             } else {

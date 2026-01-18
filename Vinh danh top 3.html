@@ -473,6 +473,50 @@
             }
         }
 
+        // Hàm helper: Tính tuần từ một ngày (bắt đầu thứ 2, kết thúc chủ nhật)
+        function getWeekRange(date) {
+            const d = new Date(date);
+            const day = d.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ..., 6 = Thứ 7
+            const diff = day === 0 ? -6 : 1 - day; // Tính số ngày cần trừ để về thứ 2
+            const monday = new Date(d);
+            monday.setDate(d.getDate() + diff);
+            monday.setHours(0, 0, 0, 0);
+
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23, 59, 59, 999);
+
+            return { start: monday, end: sunday };
+        }
+
+        // Hàm tính tuần hiện tại
+        function getCurrentWeek() {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+
+            // Tính tuần hiện tại (bắt đầu từ thứ 2)
+            const currentWeekRange = getWeekRange(now);
+            const currentWeekStart = currentWeekRange.start;
+
+            // So sánh với các tuần đã định nghĩa (tính từ thứ 2)
+            const weekRanges = [
+                { id: 'w1', date: new Date(2025, 11, 29) },
+                { id: 'w2', date: new Date(2026, 0, 5) },
+                { id: 'w3', date: new Date(2026, 0, 12) },
+                { id: 'w4', date: new Date(2026, 0, 19) },
+                { id: 'w5', date: new Date(2026, 0, 26) }
+            ];
+
+            for (let week of weekRanges) {
+                const weekRange = getWeekRange(week.date);
+                if (currentWeekStart.getTime() === weekRange.start.getTime()) {
+                    return week.id;
+                }
+            }
+
+            return 'w1'; // Mặc định
+        }
+
         // Hàm tính toán timeLabel từ filter settings hiện tại
         function getCurrentTimeLabel() {
             try {
@@ -481,35 +525,8 @@
                     const filterSettings = JSON.parse(filterSettingsStr);
                     const type = filterSettings.periodType || 'week';
 
-                    if (type === 'week') {
-                        // Tính toán thời gian tuần dựa trên weekValue
-                        const weekValue = filterSettings.periodValue || 'w1';
-                        const weekRanges = {
-                            'w1': { date: new Date(2025, 11, 29) },
-                            'w2': { date: new Date(2026, 0, 5) },
-                            'w3': { date: new Date(2026, 0, 12) },
-                            'w4': { date: new Date(2026, 0, 19) },
-                            'w5': { date: new Date(2026, 0, 26) }
-                        };
-
-                        if (weekRanges[weekValue]) {
-                            const weekDate = weekRanges[weekValue].date;
-                            const day = weekDate.getDay();
-                            const diff = day === 0 ? -6 : 1 - day;
-                            const monday = new Date(weekDate);
-                            monday.setDate(weekDate.getDate() + diff);
-
-                            const sunday = new Date(monday);
-                            sunday.setDate(monday.getDate() + 6);
-
-                            const startDay = monday.getDate();
-                            const startMonth = monday.getMonth() + 1;
-                            const endDay = sunday.getDate();
-                            const endMonth = sunday.getMonth() + 1;
-
-                            return `Tuần ${weekValue.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
-                        }
-                    } else if (type === 'month') {
+                    // CHỈ hiển thị tháng khi periodType === 'month'
+                    if (type === 'month') {
                         const m = filterSettings.month || new Date().getMonth() + 1;
                         const y = filterSettings.year || new Date().getFullYear();
                         return `Tháng ${m}/${y}`;
@@ -519,10 +536,29 @@
                 console.error('[VINH DANH] Lỗi đọc filter settings:', e);
             }
 
-            // Fallback: sử dụng từ dữ liệu hoặc mặc định
-            if (honorsData.length > 0 && honorsData[currentIdx] && honorsData[currentIdx].timeLabel) {
-                return honorsData[currentIdx].timeLabel;
+            // MẶC ĐỊNH: Luôn hiển thị tuần hiện tại (auto)
+            const currentWeek = getCurrentWeek();
+            const weekRanges = {
+                'w1': { date: new Date(2025, 11, 29) },
+                'w2': { date: new Date(2026, 0, 5) },
+                'w3': { date: new Date(2026, 0, 12) },
+                'w4': { date: new Date(2026, 0, 19) },
+                'w5': { date: new Date(2026, 0, 26) }
+            };
+
+            if (weekRanges[currentWeek]) {
+                const weekDate = weekRanges[currentWeek].date;
+                const weekRange = getWeekRange(weekDate);
+                
+                const startDay = weekRange.start.getDate();
+                const startMonth = weekRange.start.getMonth() + 1;
+                const endDay = weekRange.end.getDate();
+                const endMonth = weekRange.end.getMonth() + 1;
+
+                return `Tuần ${currentWeek.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
             }
+
+            // Fallback cuối cùng
             return "TUẦN";
         }
 

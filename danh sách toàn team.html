@@ -55,13 +55,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 1vh 1.5vw;
-            margin-bottom: 1vh;
+            padding: 0.3vh 1vw;
+            margin-bottom: 0.3vh;
             position: relative;
         }
 
         .lumi-logo {
-            height: 6vh;
+            height: 3.5vh;
             width: auto;
             object-fit: contain;
             mix-blend-mode: multiply;
@@ -71,7 +71,7 @@
         .lumi-brand {
             font-family: 'Montserrat', sans-serif;
             font-weight: 900;
-            font-size: 2.8vw;
+            font-size: 1.8vw;
             background: linear-gradient(to right, #11998e, #38ef7d);
             -webkit-background-clip: text;
             background-clip: text;
@@ -82,20 +82,20 @@
 
         .page-title {
             text-align: center;
-            font-size: 2.5vw;
+            font-size: 1.8vw;
             font-weight: 900;
             background: var(--team-gradient);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             text-transform: uppercase;
-            margin: 1vh 0;
+            margin: 0.5vh 0;
             white-space: nowrap;
             overflow: visible;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .container {
@@ -362,18 +362,34 @@
         // Hàm render danh sách team
         function renderTeamList(containerId, data, isSale) {
             const container = document.getElementById(containerId);
-            if (!container) return;
+            if (!container) {
+                console.error('[BXH TOÀN TEAM] Không tìm thấy container:', containerId);
+                return;
+            }
             
             if (!data || data.length === 0) {
+                console.warn(`[BXH TOÀN TEAM] Không có dữ liệu cho ${containerId}`);
                 container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu</div>';
                 return;
             }
 
+            console.log(`[BXH TOÀN TEAM] Rendering ${data.length} items for ${containerId} (isSale: ${isSale})`);
+
             let html = '';
             data.forEach((item, index) => {
+                // Validate item data
+                if (!item || !item.name) {
+                    console.warn(`[BXH TOÀN TEAM] Item ${index} không hợp lệ:`, item);
+                    return;
+                }
+
                 const rank = index + 1;
                 const crown = rank === 1 ? '<i class="fa-solid fa-crown avatar-crown"></i>' : '';
                 const topClass = rank <= 3 ? `top-${rank}` : '';
+                
+                // Đảm bảo các trường cần thiết có giá trị
+                const displayValue = item.value || formatMoney(item.rawVal || 0);
+                const displayPercent = item.percent !== undefined ? item.percent : 0;
                 
                 // Hiển thị thông số tùy theo loại team
                 let metricsHtml = '';
@@ -388,7 +404,7 @@
                     metricsHtml = `
                         <div style="font-size: 0.65vw; color: #666; margin-top: 0.2vh; line-height: 1.4;">
                             <div style="font-weight: 600; color: #ff6b6b;">ADS: ${item.displayRate}</div>
-                            <div style="font-size: 0.6vw; color: #28a745;">DS: ${formatMoney(item.doanhthu || 0)}</div>
+                            <div style="font-size: 0.6vw; color: #28a745;">DS: ${formatMoney(item.doanhthu || item.rawVal || 0)}</div>
                             <div style="font-size: 0.6vw; color: #dc3545;">CPQC: ${formatMoney(item.cpqc || 0)}</div>
                         </div>`;
                 }
@@ -404,7 +420,7 @@
                         </div>
                     </div>
                     <div class="bar-container">
-                        <div class="bar-fill" style="width:0%" data-width="${item.percent || 0}%">${item.value || '0'}</div>
+                        <div class="bar-fill" style="width:0%" data-width="${displayPercent}%">${displayValue}</div>
                     </div>
                 </div>`;
             });
@@ -431,21 +447,52 @@
             try {
                 const teamListDataStr = localStorage.getItem('teamListData');
                 if (!teamListDataStr) {
-                    console.warn('Chưa có dữ liệu team list trong localStorage');
-                    document.getElementById('team-sale-list').innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu. Vui lòng mở "BXH top 3" trước.</div>';
-                    document.getElementById('team-mkt-list').innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu. Vui lòng mở "BXH top 3" trước.</div>';
+                    console.warn('[BXH TOÀN TEAM] Chưa có dữ liệu team list trong localStorage');
+                    const saleContainer = document.getElementById('team-sale-list');
+                    const mktContainer = document.getElementById('team-mkt-list');
+                    if (saleContainer) {
+                        saleContainer.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu. Vui lòng mở "BXH top 3" trước.</div>';
+                    }
+                    if (mktContainer) {
+                        mktContainer.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu. Vui lòng mở "BXH top 3" trước.</div>';
+                    }
                     return;
                 }
 
                 const teamListData = JSON.parse(teamListDataStr);
-                console.log('Loaded team list data:', teamListData);
+                console.log('[BXH TOÀN TEAM] Loaded team list data:', teamListData);
+                console.log('[BXH TOÀN TEAM] Sale list count:', (teamListData.saleList || []).length);
+                console.log('[BXH TOÀN TEAM] MKT list count:', (teamListData.mktList || []).length);
 
-                renderTeamList('team-sale-list', teamListData.saleList || [], true);
-                renderTeamList('team-mkt-list', teamListData.mktList || [], false);
+                const saleList = teamListData.saleList || [];
+                const mktList = teamListData.mktList || [];
+
+                if (saleList.length === 0 && mktList.length === 0) {
+                    console.warn('[BXH TOÀN TEAM] Dữ liệu rỗng - có thể BXH top 3 chưa load xong');
+                    const saleContainer = document.getElementById('team-sale-list');
+                    const mktContainer = document.getElementById('team-mkt-list');
+                    if (saleContainer) {
+                        saleContainer.innerHTML = '<div style="text-align:center;color:#ff9800;padding:20px;">Đang chờ dữ liệu từ "BXH top 3"...</div>';
+                    }
+                    if (mktContainer) {
+                        mktContainer.innerHTML = '<div style="text-align:center;color:#ff9800;padding:20px;">Đang chờ dữ liệu từ "BXH top 3"...</div>';
+                    }
+                    return;
+                }
+
+                renderTeamList('team-sale-list', saleList, true);
+                renderTeamList('team-mkt-list', mktList, false);
             } catch (e) {
-                console.error('Lỗi load dữ liệu:', e);
-                document.getElementById('team-sale-list').innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">Lỗi tải dữ liệu</div>';
-                document.getElementById('team-mkt-list').innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">Lỗi tải dữ liệu</div>';
+                console.error('[BXH TOÀN TEAM] Lỗi load dữ liệu:', e);
+                console.error('[BXH TOÀN TEAM] Error stack:', e.stack);
+                const saleContainer = document.getElementById('team-sale-list');
+                const mktContainer = document.getElementById('team-mkt-list');
+                if (saleContainer) {
+                    saleContainer.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">Lỗi tải dữ liệu: ' + e.message + '</div>';
+                }
+                if (mktContainer) {
+                    mktContainer.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">Lỗi tải dữ liệu: ' + e.message + '</div>';
+                }
             }
         }
 
@@ -455,31 +502,57 @@
         // Lắng nghe thay đổi trong localStorage để tự động cập nhật khi filter thay đổi
         window.addEventListener('storage', function(e) {
             if (e.key === 'teamListData') {
-                console.log('Dữ liệu team list đã được cập nhật, reloading...');
+                console.log('[BXH TOÀN TEAM] Dữ liệu team list đã được cập nhật, reloading...');
                 loadAndDisplayData();
+            }
+            // Lắng nghe thay đổi filter settings
+            if (e.key === 'filterSettings') {
+                console.log('[BXH TOÀN TEAM] Filter settings đã thay đổi, đợi dữ liệu mới...');
+                // Đợi một chút để BXH top 3.html có thời gian tính lại và lưu dữ liệu
+                setTimeout(() => {
+                    loadAndDisplayData();
+                }, 1500);
             }
         });
 
         // Lắng nghe postMessage từ parent window
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'teamListDataUpdated') {
-                console.log('Nhận thông báo cập nhật dữ liệu từ parent');
+                console.log('[BXH TOÀN TEAM] Nhận thông báo cập nhật dữ liệu từ parent');
                 loadAndDisplayData();
+            }
+            // Lắng nghe thay đổi filter từ parent
+            if (event.data && event.data.type === 'filterChanged') {
+                console.log('[BXH TOÀN TEAM] Nhận thông báo filter đã thay đổi, đợi dữ liệu mới...');
+                // Đợi một chút để BXH top 3.html có thời gian tính lại và lưu dữ liệu
+                setTimeout(() => {
+                    loadAndDisplayData();
+                }, 1500);
             }
         });
 
         // Polling để kiểm tra thay đổi localStorage (vì storage event chỉ hoạt động giữa các tab/window khác nhau)
         let lastDataHash = '';
+        let lastFilterHash = '';
         setInterval(() => {
             try {
                 const currentData = localStorage.getItem('teamListData');
                 if (currentData && currentData !== lastDataHash) {
                     lastDataHash = currentData;
-                    console.log('Phát hiện thay đổi dữ liệu, cập nhật...');
+                    console.log('[BXH TOÀN TEAM] Phát hiện thay đổi dữ liệu, cập nhật...');
                     loadAndDisplayData();
                 }
+                // Kiểm tra thay đổi filter settings
+                const currentFilter = localStorage.getItem('filterSettings');
+                if (currentFilter && currentFilter !== lastFilterHash) {
+                    lastFilterHash = currentFilter;
+                    console.log('[BXH TOÀN TEAM] Phát hiện thay đổi filter qua polling, đợi dữ liệu mới...');
+                    setTimeout(() => {
+                        loadAndDisplayData();
+                    }, 1500);
+                }
             } catch (e) {
-                console.error('Lỗi kiểm tra localStorage:', e);
+                console.error('[BXH TOÀN TEAM] Lỗi kiểm tra localStorage:', e);
             }
         }, 1000); // Kiểm tra mỗi giây
     </script>

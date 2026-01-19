@@ -370,6 +370,39 @@
             right: 20px;
         }
 
+        .btn-sound {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #b8860b;
+            color: #3e2723;
+            cursor: pointer;
+            z-index: 1000;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+
+        .btn-sound:hover {
+            background: #ffd700;
+            transform: scale(1.1);
+        }
+
+        .btn-sound.muted {
+            background: rgba(139, 0, 0, 0.3);
+            border-color: #8b0000;
+        }
+
+        .btn-sound.muted #sound-icon {
+            color: #8b0000;
+        }
+
         .btn-exit {
             position: fixed;
             top: 20px;
@@ -405,6 +438,9 @@
     <div id="slideshow-controls">
         <button class="nav-arrow nav-prev" onclick="changeSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
         <button class="nav-arrow nav-next" onclick="changeSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="btn-sound" id="btn-sound" onclick="toggleSound()">
+            <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+        </button>
         <button class="btn-exit" onclick="exitSlideshow()">Thoát</button>
     </div>
 
@@ -454,22 +490,71 @@
         let currentIdx = 0;
         let honorsData = [];
         let youtubePlayer = null;
+        let youtubeAPIReady = false;
+        let isSoundMuted = false;
 
         function onYouTubeIframeAPIReady() {
+            console.log('[VINH DANH] YouTube API đã sẵn sàng');
+            youtubeAPIReady = true;
+            initYouTubePlayer();
+        }
+
+        function initYouTubePlayer() {
+            if (!youtubeAPIReady || !window.YT || !window.YT.Player) {
+                console.warn('[VINH DANH] YouTube API chưa sẵn sàng, đợi thêm...');
+                setTimeout(initYouTubePlayer, 500);
+                return;
+            }
+
             if (!youtubePlayer) {
-                youtubePlayer = new YT.Player('youtube-player', {
-                    height: '1', width: '1', videoId: 'j3nBuwOPu8A',
-                    playerVars: { 'autoplay': 1, 'loop': 1, 'playlist': 'j3nBuwOPu8A', 'controls': 0, 'showinfo': 0, 'rel': 0 },
-                    events: {
-                        'onReady': (e) => {
-                            e.target.setVolume(100);
-                            e.target.playVideo();
+                try {
+                    console.log('[VINH DANH] Đang khởi tạo YouTube player...');
+                    youtubePlayer = new YT.Player('youtube-player', {
+                        height: '1', width: '1', 
+                        videoId: 'j3nBuwOPu8A',
+                        playerVars: { 
+                            'autoplay': 1, 
+                            'loop': 1, 
+                            'playlist': 'j3nBuwOPu8A', 
+                            'controls': 0, 
+                            'showinfo': 0, 
+                            'rel': 0,
+                            'mute': 0
                         },
-                        'onError': (e) => {
-                            console.error('YouTube player error:', e.data);
+                        events: {
+                            'onReady': (e) => {
+                                console.log('[VINH DANH] YouTube player đã sẵn sàng');
+                                try {
+                                    // Không tự động phát, để người dùng bật bằng nút loa
+                                    e.target.setVolume(100);
+                                    // Cập nhật icon nút loa
+                                    const soundIcon = document.getElementById('sound-icon');
+                                    if (soundIcon) {
+                                        soundIcon.className = 'fa-solid fa-volume-high';
+                                    }
+                                    console.log('[VINH DANH] ✅ YouTube player sẵn sàng, chờ người dùng bật nhạc');
+                                } catch (err) {
+                                    console.error('[VINH DANH] Lỗi khi khởi tạo player:', err);
+                                }
+                            },
+                            'onStateChange': (e) => {
+                                if (e.data === YT.PlayerState.PLAYING) {
+                                    console.log('[VINH DANH] ✅ Nhạc đang phát');
+                                } else if (e.data === YT.PlayerState.PAUSED) {
+                                    console.log('[VINH DANH] ⏸️ Nhạc đã tạm dừng');
+                                } else if (e.data === YT.PlayerState.ENDED) {
+                                    console.log('[VINH DANH] 🔄 Nhạc đã kết thúc, phát lại...');
+                                    e.target.playVideo();
+                                }
+                            },
+                            'onError': (e) => {
+                                console.error('[VINH DANH] ❌ YouTube player error:', e.data);
+                            }
                         }
-                    }
-                });
+                    });
+                } catch (err) {
+                    console.error('[VINH DANH] ❌ Lỗi khởi tạo YouTube player:', err);
+                }
             }
         }
 
@@ -536,7 +621,49 @@
                 console.error('[VINH DANH] Lỗi đọc filter settings:', e);
             }
 
-            // MẶC ĐỊNH: Luôn hiển thị tuần hiện tại (auto)
+            // Đọc filter settings từ index.html để hiển thị đúng thời gian
+            try {
+                const filterSettingsStr = localStorage.getItem('filterSettings');
+                if (filterSettingsStr) {
+                    const filterSettings = JSON.parse(filterSettingsStr);
+                    const type = filterSettings.periodType || 'week';
+                    
+                    if (type === 'week') {
+                        const weekValue = filterSettings.periodValue || 'w1';
+                        // Tính toán khoảng thời gian thực tế từ filter
+                        let weekStartDate;
+                        if (weekValue === 'w1') { weekStartDate = new Date(2025, 11, 29); }
+                        else if (weekValue === 'w2') { weekStartDate = new Date(2026, 0, 5); }
+                        else if (weekValue === 'w3') { weekStartDate = new Date(2026, 0, 12); }
+                        else if (weekValue === 'w4') { weekStartDate = new Date(2026, 0, 19); }
+                        else { weekStartDate = new Date(2026, 0, 26); }
+                        
+                        const day = weekStartDate.getDay();
+                        const diff = day === 0 ? -6 : 1 - day;
+                        const monday = new Date(weekStartDate);
+                        monday.setDate(weekStartDate.getDate() + diff);
+                        monday.setHours(0, 0, 0, 0);
+                        
+                        const sunday = new Date(monday);
+                        sunday.setDate(monday.getDate() + 6);
+                        sunday.setHours(23, 59, 59, 999);
+                        
+                        const weekNum = weekValue.replace('w', '');
+                        const startStr = `${monday.getDate()}/${monday.getMonth() + 1}`;
+                        const endStr = `${sunday.getDate()}/${sunday.getMonth() + 1}`;
+                        return `Tuần ${weekNum} (${startStr} - ${endStr})`;
+                    }
+                }
+            } catch (e) {
+                console.error('[VINH DANH] Lỗi đọc filter settings:', e);
+            }
+            
+            // Fallback: Lấy từ dữ liệu cũ nếu có
+            if (honorsData.length > 0 && honorsData[currentIdx] && honorsData[currentIdx].timeLabel) {
+                return honorsData[currentIdx].timeLabel;
+            }
+            
+            // Fallback cuối cùng: Tuần hiện tại
             const currentWeek = getCurrentWeek();
             const weekRanges = {
                 'w1': { date: new Date(2025, 11, 29) },
@@ -601,6 +728,40 @@
 
         window.exitSlideshow = function () { window.location.href = 'BXH LUMI mới.html'; };
 
+        // Hàm bật/tắt nhạc
+        function toggleSound() {
+            if (!youtubePlayer) {
+                console.warn('[VINH DANH] YouTube player chưa sẵn sàng');
+                return;
+            }
+
+            try {
+                isSoundMuted = !isSoundMuted;
+                const btnSound = document.getElementById('btn-sound');
+                const soundIcon = document.getElementById('sound-icon');
+
+                if (isSoundMuted) {
+                    // Tắt nhạc
+                    youtubePlayer.mute();
+                    btnSound.classList.add('muted');
+                    soundIcon.className = 'fa-solid fa-volume-xmark';
+                    console.log('[VINH DANH] 🔇 Đã tắt nhạc');
+                } else {
+                    // Bật nhạc
+                    youtubePlayer.unMute();
+                    youtubePlayer.setVolume(100);
+                    if (youtubePlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+                        youtubePlayer.playVideo();
+                    }
+                    btnSound.classList.remove('muted');
+                    soundIcon.className = 'fa-solid fa-volume-high';
+                    console.log('[VINH DANH] 🔊 Đã bật nhạc');
+                }
+            } catch (err) {
+                console.error('[VINH DANH] Lỗi khi bật/tắt nhạc:', err);
+            }
+        }
+
         // Hàm load dữ liệu từ localStorage
         function loadHonorsData() {
             try {
@@ -622,6 +783,23 @@
         }
 
         function init() {
+            // Đảm bảo YouTube player được khởi tạo
+            if (window.YT && window.YT.Player) {
+                initYouTubePlayer();
+            } else if (youtubeAPIReady) {
+                initYouTubePlayer();
+            } else {
+                // Nếu API chưa load, đợi thêm
+                setTimeout(() => {
+                    if (window.YT && window.YT.Player) {
+                        initYouTubePlayer();
+                    } else {
+                        console.warn('[VINH DANH] YouTube API chưa load, thử lại sau 1 giây...');
+                        setTimeout(initYouTubePlayer, 1000);
+                    }
+                }, 500);
+            }
+            
             const params = new URLSearchParams(window.location.search);
             const isSlideshow = params.get('mode') === 'slideshow';
 

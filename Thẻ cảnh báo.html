@@ -1495,11 +1495,14 @@
             const currentMonth = now.getMonth() + 1;
             const currentYear = now.getFullYear();
             const currentDay = now.getDate();
+            const daysFromMonthStart = currentDay;
             const timeLabel = `Tháng ${currentMonth}/${currentYear} (đến ngày ${currentDay})`;
             currentStats.timeLabel = timeLabel;
 
+            const startStr = `1/${currentMonth}/${currentYear}`;
+            const endStr = `${currentDay}/${currentMonth}/${currentYear}`;
             document.getElementById('date-range-display').innerText =
-                `1/${currentMonth}/${currentYear} - ${currentDay}/${currentMonth}/${currentYear}`;
+                `${startStr} - ${endStr} (${daysFromMonthStart} ngày)`;
 
             renderList('sale-list', stats.saleList.slice(0, 3), false);
             renderList('mkt-list', stats.mktList.slice(0, 3), false);

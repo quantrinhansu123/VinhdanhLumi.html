@@ -603,27 +603,11 @@
                     toggleFilterUI();
                     console.log('[FILTER] Đã load filter settings:', settings);
                 } else {
-                    // Mặc định - tự động set về tuần hiện tại
-                    const currentDate = new Date();
-                    const currentWeek = getCurrentWeek();
-                    const currentMonth = currentDate.getMonth() + 1;
-                    const currentYear = currentDate.getFullYear();
-
-                    if (document.getElementById('period-type')) {
-                        document.getElementById('period-type').value = 'week';
-                    }
-                    if (document.getElementById('period-value')) {
-                        document.getElementById('period-value').value = currentWeek;
-                    }
-                    if (document.getElementById('filter-month')) {
-                        document.getElementById('filter-month').value = currentMonth;
-                    }
-                    if (document.getElementById('filter-year')) {
-                        document.getElementById('filter-year').value = currentYear;
-                    }
+                    // Lần đầu load - giữ giá trị mặc định từ HTML (không tự động set về tuần hiện tại)
                     toggleFilterUI();
-                    saveFilterSettings(); // Lưu vào localStorage
-                    console.log(`[INDEX] Tự động set về tuần hiện tại: ${currentWeek}`);
+                    // Lưu giá trị hiện tại vào localStorage để giữ nguyên lựa chọn
+                    saveFilterSettings();
+                    console.log('[FILTER] Lần đầu load - giữ giá trị mặc định');
                 }
             } catch (e) {
                 console.error('[FILTER] Lỗi load settings:', e);
@@ -633,15 +617,18 @@
         function notifyFilterChange() {
             // Lưu filter settings vào localStorage
             saveFilterSettings();
+            // Xóa flag để đảm bảo các trang khác biết filter đến từ index.html
+            localStorage.removeItem('filterSource');
+            console.log('[FILTER] 🔄 Filter đã thay đổi, bắt đầu cập nhật dữ liệu...');
             
             // Gửi message đến iframe hiện tại để cập nhật dữ liệu
             const frame = document.getElementById('display-frame');
             if (frame && frame.contentWindow) {
                 try {
                     frame.contentWindow.postMessage({ type: 'filterChanged' }, '*');
-                    console.log('[FILTER] Đã gửi filterChanged message đến iframe hiện tại');
+                    console.log('[FILTER] ✅ Đã gửi filterChanged message đến iframe hiện tại');
                 } catch (e) {
-                    console.error('Lỗi gửi message đến iframe:', e);
+                    console.error('[FILTER] ❌ Lỗi gửi message đến iframe:', e);
                 }
             }
             
@@ -651,9 +638,9 @@
             const currentTab = tabs[currentTabIndex];
             const isBXHTop3Tab = currentTab && (currentTab.name === 'BXH top 3');
             
-            // Nếu không phải đang ở tab BXH top 3, load nó trong background
-            if (bxhTop3TabIndex !== -1 && !isBXHTop3Tab) {
-                console.log('[FILTER] Load BXH top 3 trong background để tính toán lại dữ liệu...');
+            // LUÔN load BXH top 3 trong background (kể cả khi đang ở tab đó) để đảm bảo tính toán lại
+            if (bxhTop3TabIndex !== -1) {
+                console.log('[FILTER] 🔄 Load BXH top 3 trong background để tính toán lại dữ liệu...');
                 // Tạo iframe ẩn để load BXH top 3
                 const hiddenFrame = document.createElement('iframe');
                 hiddenFrame.style.position = 'absolute';
@@ -662,22 +649,24 @@
                 hiddenFrame.style.height = '1px';
                 hiddenFrame.src = tabs[bxhTop3TabIndex].file;
                 hiddenFrame.onload = function() {
-                    console.log('[FILTER] BXH top 3 đã load, gửi message để cập nhật dữ liệu...');
+                    console.log('[FILTER] ✅ BXH top 3 đã load, gửi message để cập nhật dữ liệu...');
                     setTimeout(() => {
                         try {
                             if (hiddenFrame.contentWindow) {
                                 hiddenFrame.contentWindow.postMessage({ type: 'filterChanged' }, '*');
+                                console.log('[FILTER] ✅ Đã gửi filterChanged message đến BXH top 3');
                             }
-                            // Xóa iframe sau 5 giây
+                            // Xóa iframe sau 10 giây (tăng thời gian để đảm bảo tính toán xong)
                             setTimeout(() => {
                                 if (hiddenFrame.parentNode) {
                                     hiddenFrame.parentNode.removeChild(hiddenFrame);
+                                    console.log('[FILTER] 🗑️ Đã xóa hidden iframe');
                                 }
-                            }, 5000);
+                            }, 10000);
                         } catch (e) {
-                            console.error('[FILTER] Lỗi gửi message đến BXH top 3:', e);
+                            console.error('[FILTER] ❌ Lỗi gửi message đến BXH top 3:', e);
                         }
-                    }, 1500); // Đợi 1.5 giây để trang load xong
+                    }, 2000); // Tăng thời gian đợi lên 2 giây để đảm bảo trang load xong
                 };
                 document.body.appendChild(hiddenFrame);
             }

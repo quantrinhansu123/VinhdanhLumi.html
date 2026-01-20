@@ -112,6 +112,7 @@
             padding: 0 1.5vw;
             flex-wrap: nowrap;
             align-items: stretch;
+            min-height: 80vh; /* Tăng chiều cao tối thiểu cho bảng */
         }
 
         .board {
@@ -124,6 +125,7 @@
             flex-direction: column;
             position: relative;
             overflow: hidden;
+            min-height: 70vh; /* Tăng chiều cao tối thiểu cho từng bảng */
         }
 
         .board::before {
@@ -173,12 +175,12 @@
         .rank-item {
             display: flex;
             align-items: center;
-            margin-bottom: 0.6vh;
-            padding: 0.6vh 0.8vw;
-            border-radius: 12px;
+            margin-bottom: 2vh;
+            padding: 2vh 2vw;
+            border-radius: 24px;
             background: #fff;
             transition: transform 0.3s;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
             border: 1px solid transparent;
             width: 100%;
             box-sizing: border-box;
@@ -205,56 +207,56 @@
         }
 
         .rank-pos {
-            width: 2.5vw;
+            width: 4vw;
             font-weight: 900;
-            font-size: 1.2vw;
+            font-size: 2vw;
             color: #ccc;
             text-align: center;
-            margin-right: 0.8vw;
+            margin-right: 1.2vw;
             flex-shrink: 0;
         }
 
         .rank-pos.rank-1 {
             color: var(--gold);
-            font-size: 1.8vw;
-            text-shadow: 0 0 10px var(--gold-glow);
+            font-size: 2.8vw;
+            text-shadow: 0 0 16px var(--gold-glow);
         }
 
         .rank-pos.rank-2 {
             color: var(--silver);
-            font-size: 1.6vw;
+            font-size: 2.4vw;
         }
 
         .rank-pos.rank-3 {
             color: var(--bronze);
-            font-size: 1.4vw;
+            font-size: 2vw;
         }
 
         .user-info-group {
             display: flex;
             align-items: center;
-            width: 8vw;
+            width: 12vw;
             flex-shrink: 0;
         }
 
         .avatar {
-            width: 3vh;
-            height: 3vh;
+            width: 6vh;
+            height: 6vh;
             border-radius: 50%;
             object-fit: cover;
-            border: 0.15vh solid #fff;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-            margin-right: 0.6vw;
+            border: 0.3vh solid #fff;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+            margin-right: 1vw;
             position: relative;
         }
 
         .avatar-crown {
             position: absolute;
-            top: -1.5vh;
-            left: 1.5vw;
+            top: -2.5vh;
+            left: 2vw;
             color: var(--gold);
-            font-size: 1.5vw;
-            filter: drop-shadow(0 0 5px var(--gold-glow));
+            font-size: 2.5vw;
+            filter: drop-shadow(0 0 8px var(--gold-glow));
             animation: bounce 2s infinite;
             z-index: 10;
         }
@@ -290,7 +292,7 @@
 
         .name {
             font-weight: 800;
-            font-size: 1.1vw;
+            font-size: 2vw;
             color: var(--text-primary);
             white-space: nowrap;
             overflow: hidden;
@@ -301,8 +303,8 @@
         .bar-container {
             flex: 1;
             background-color: #f1f3f5;
-            border-radius: 12px;
-            height: 2.2vh;
+            border-radius: 18px;
+            height: 4vh;
             position: relative;
             margin-left: 0;
             overflow: hidden;
@@ -312,19 +314,19 @@
 
         .bar-fill {
             height: 100%;
-            border-radius: 12px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            padding-right: 0.6vw;
+            padding-right: 1vw;
             font-weight: 900;
-            font-size: 0.9vw;
+            font-size: 1.5vw;
             color: #fff;
             width: 0%;
             max-width: 100%;
             transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
             white-space: nowrap;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 2px 0 16px rgba(0, 0, 0, 0.15);
         }
 
         .board.sale .bar-fill {

@@ -144,6 +144,7 @@
             display: flex;
             gap: 1.5vw;
             padding: 0 1.5vw;
+            margin-top: 3vh;
             flex-wrap: nowrap;
             align-items: stretch;
         }
@@ -799,7 +800,7 @@
         let salesReportData = [];
         let mktReportData = [];
         let hrData = [];
-        let currentStats = null; 
+        let currentStats = null;
 
         // HÀM TÌM GIÁ TRỊ TỪ ĐỐI TƯỢNG (CHẤP NHẬN CHỮ HOA/THƯỜNG)
         function findVal(obj, keys) {
@@ -840,7 +841,7 @@
                 if (parts.length === 3) {
                     const month = parseInt(parts[0]);
                     const day = parseInt(parts[1]);
-                    const year = parseInt(parts[2]); 
+                    const year = parseInt(parts[2]);
                     if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
                         return new Date(year, month - 1, day);
                     }
@@ -1174,7 +1175,7 @@
 
             const { start, end } = getDateRange(type, weekValue);
             const shouldFilterStatus = (type === 'month') || (type === 'week' && !isCurrentPeriod);
-            
+
             const stats = calculateStats(start, end, shouldFilterStatus, isCurrentPeriod);
             currentStats = stats;
 
@@ -1208,13 +1209,13 @@
                 const selY = parseInt(document.getElementById('filter-year').value);
                 const mStart = new Date(selY, selM - 1, 1);
                 const mEnd = new Date(selY, selM, 0, 23, 59, 59);
-                
+
                 // Kiểm tra xem có phải tuần hiện tại không
                 // Nếu là tuần hiện tại: hiển thị 2 bạn doanh số cao nhất (không lọc theo hiệu suất)
                 // Nếu là tuần trước: giữ nguyên rule cũ (lọc theo hiệu suất)
                 const isCurrentWeek = isCurrentPeriod;
                 const mStats = calculateStats(mStart, mEnd, true, isCurrentWeek);
-                
+
                 renderList('sale-month-list', mStats.saleList.slice(0, 2), true);
                 renderList('mkt-month-list', mStats.mktList.slice(0, 2), true);
                 document.querySelectorAll('.month-header').forEach(h => {

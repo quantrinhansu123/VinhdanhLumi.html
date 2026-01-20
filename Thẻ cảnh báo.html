@@ -1632,7 +1632,7 @@
                     const now = new Date();
                     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
                     const daysFromMonthStart = Math.floor((now - firstDayOfMonth) / (1000 * 60 * 60 * 24)) + 1;
-                    
+
                     // Tính threshold theo ca hiện tại
                     const currentShift = getCurrentShift();
                     const saleThresholdDay = 7000000; // 7 triệu cho ca ngày
@@ -1640,7 +1640,7 @@
                     const saleThreshold = (currentShift === 'Ca ngày') ? saleThresholdDay : saleThresholdNight;
                     const saleMinRevenue = saleThreshold * daysFromMonthStart;
                     const shiftText = (currentShift === 'Ca ngày') ? 'Ca ngày' : 'Ca đêm';
-                    
+
                     ruleText = `Điều kiện cảnh báo Sale: Tỷ lệ chốt < 5% HOẶC Doanh số < ${(saleMinRevenue / 1000000).toFixed(1)} triệu (${(saleThreshold / 1000000)}tr × ${daysFromMonthStart} ngày - ${shiftText})`;
                 } else if (isMktBoard) {
                     const now = new Date();
@@ -1889,7 +1889,103 @@
         }
 
         initApp();
-        setTimeout(function () { location.reload(); }, 300000);
+
+        // Auto-rotate giữa các thẻ cảnh báo sau mỗi 5 phút
+        let currentWarningIndex = 0;
+        let warningCards = [];
+        let rotationTimer = null;
+
+        function updateWarningCards() {
+            // Lấy tất cả các thẻ cảnh báo (thẻ có class warning-1, warning-2, etc.)
+            warningCards = document.querySelectorAll('.rank-item[class*="warning-"]');
+            console.log(`[AUTO-ROTATE] Tìm thấy ${warningCards.length} thẻ cảnh báo`);
+        }
+
+        function scheduleNextRotation() {
+            // Xóa timer cũ nếu có
+            if (rotationTimer) {
+                clearTimeout(rotationTimer);
+            }
+
+            // Xác định thời gian cho thẻ hiện tại
+            // Thẻ đầu tiên (index 0): 5 phút = 300,000ms
+            // Các thẻ còn lại: 10 phút = 600,000ms
+            const isFirstCard = (currentWarningIndex === 0);
+            const delay = isFirstCard ? 300000 : 600000; // 5 phút hoặc 10 phút
+
+            const delayText = isFirstCard ? '5 phút' : '10 phút';
+            console.log(`[AUTO-ROTATE] Thẻ hiện tại sẽ hiển thị trong ${delayText}`);
+
+            rotationTimer = setTimeout(() => {
+                focusNextWarning();
+                scheduleNextRotation(); // Lên lịch cho lần tiếp theo
+            }, delay);
+        }
+
+        function focusNextWarning() {
+            updateWarningCards();
+
+            if (warningCards.length === 0) {
+                console.log('[AUTO-ROTATE] Không có thẻ cảnh báo nào để hiển thị');
+                return;
+            }
+
+            // Xóa highlight của thẻ cũ
+            warningCards.forEach(card => {
+                card.style.transform = 'scale(1)';
+                card.style.transition = 'all 0.5s ease';
+                card.style.boxShadow = '';
+            });
+
+            // Focus vào thẻ tiếp theo
+            const currentCard = warningCards[currentWarningIndex];
+            if (currentCard) {
+                // Scroll đến thẻ hiện tại
+                currentCard.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'center'
+                });
+
+                // Highlight thẻ hiện tại
+                setTimeout(() => {
+                    currentCard.style.transform = 'scale(1.05)';
+                    currentCard.style.transition = 'all 0.5s ease';
+                    currentCard.style.boxShadow = '0 8px 30px rgba(220, 53, 69, 0.5)';
+                }, 500);
+
+                const cardNumber = currentWarningIndex + 1;
+                const isFirst = (currentWarningIndex === 0);
+                const duration = isFirst ? '5 phút' : '10 phút';
+                console.log(`[AUTO-ROTATE] Đang focus vào thẻ cảnh báo #${cardNumber}/${warningCards.length} - Hiển thị trong ${duration}`);
+            }
+
+            // Chuyển sang thẻ tiếp theo (quay vòng khi hết danh sách)
+            currentWarningIndex = (currentWarningIndex + 1) % warningCards.length;
+        }
+
+        // Chạy lần đầu sau 2 giây (để UI render xong)
+        setTimeout(() => {
+            focusNextWarning();
+            scheduleNextRotation(); // Bắt đầu lên lịch auto-rotate
+        }, 2000);
+
+        // Cập nhật lại danh sách thẻ khi dữ liệu thay đổi
+        const originalUpdateData = window.updateData;
+        if (typeof originalUpdateData === 'function') {
+            window.updateData = function () {
+                originalUpdateData.apply(this, arguments);
+                setTimeout(() => {
+                    // Reset về thẻ đầu tiên và restart timer
+                    if (rotationTimer) {
+                        clearTimeout(rotationTimer);
+                    }
+                    currentWarningIndex = 0;
+                    focusNextWarning();
+                    scheduleNextRotation();
+                }, 1000);
+            };
+        }
 
     </script>
 </body>

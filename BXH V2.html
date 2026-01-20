@@ -223,8 +223,8 @@
 
         .main-title {
             font-family: 'Playfair Display', serif;
-            font-size: 4vh;
-            /* Bằng với sub-title (CỦA TUẦN) */
+            font-size: 5.5vh;
+            /* Giảm kích thước để hiển thị trên 1 dòng */
             font-weight: 900;
             text-transform: uppercase;
             line-height: 1.1;
@@ -405,6 +405,7 @@
     <div id="slideshow-controls">
         <button class="nav-arrow nav-prev" onclick="changeSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
         <button class="nav-arrow nav-next" onclick="changeSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="btn-exit" onclick="exitSlideshow()">Thoát</button>
     </div>
 
     <div class="plaque-container">
@@ -434,7 +435,7 @@
                 <div class="brand-name">Lumi Global</div>
             </div>
 
-            <div class="main-title">TOP 1</div>
+            <div class="main-title">GIẢI NHẤT DOANH SỐ</div>
             <div class="sub-title">CỦA TUẦN</div>
 
             <div class="name-pill" id="winner-name">NGUYỄN VĂN A</div>
@@ -458,11 +459,11 @@
             if (!youtubePlayer) {
                 youtubePlayer = new YT.Player('youtube-player', {
                     height: '1', width: '1', videoId: 'j3nBuwOPu8A',
-                    playerVars: { 'autoplay': 0, 'loop': 1, 'playlist': 'j3nBuwOPu8A', 'controls': 0, 'showinfo': 0, 'rel': 0, 'mute': 0 },
+                    playerVars: { 'autoplay': 1, 'loop': 1, 'playlist': 'j3nBuwOPu8A', 'controls': 0, 'showinfo': 0, 'rel': 0 },
                     events: {
                         'onReady': (e) => {
                             e.target.setVolume(100);
-                            // Không tự động phát, chờ người dùng nhấn nút loa
+                            e.target.playVideo();
                         },
                         'onError': (e) => {
                             console.error('YouTube player error:', e.data);
@@ -472,95 +473,6 @@
             }
         }
 
-        // Hàm helper: Tính tuần từ một ngày (bắt đầu thứ 2, kết thúc chủ nhật)
-        function getWeekRange(date) {
-            const d = new Date(date);
-            const day = d.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ..., 6 = Thứ 7
-            const diff = day === 0 ? -6 : 1 - day; // Tính số ngày cần trừ để về thứ 2
-            const monday = new Date(d);
-            monday.setDate(d.getDate() + diff);
-            monday.setHours(0, 0, 0, 0);
-
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
-            sunday.setHours(23, 59, 59, 999);
-
-            return { start: monday, end: sunday };
-        }
-
-        // Hàm tính tuần hiện tại
-        function getCurrentWeek() {
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-
-            // Tính tuần hiện tại (bắt đầu từ thứ 2)
-            const currentWeekRange = getWeekRange(now);
-            const currentWeekStart = currentWeekRange.start;
-
-            // So sánh với các tuần đã định nghĩa (tính từ thứ 2)
-            const weekRanges = [
-                { id: 'w1', date: new Date(2025, 11, 29) },
-                { id: 'w2', date: new Date(2026, 0, 5) },
-                { id: 'w3', date: new Date(2026, 0, 12) },
-                { id: 'w4', date: new Date(2026, 0, 19) },
-                { id: 'w5', date: new Date(2026, 0, 26) }
-            ];
-
-            for (let week of weekRanges) {
-                const weekRange = getWeekRange(week.date);
-                if (currentWeekStart.getTime() === weekRange.start.getTime()) {
-                    return week.id;
-                }
-            }
-
-            return 'w1'; // Mặc định
-        }
-
-        // Hàm tính toán timeLabel từ filter settings hiện tại
-        function getCurrentTimeLabel() {
-            try {
-                const filterSettingsStr = localStorage.getItem('filterSettings');
-                if (filterSettingsStr) {
-                    const filterSettings = JSON.parse(filterSettingsStr);
-                    const type = filterSettings.periodType || 'week';
-
-                    // CHỈ hiển thị tháng khi periodType === 'month'
-                    if (type === 'month') {
-                        const m = filterSettings.month || new Date().getMonth() + 1;
-                        const y = filterSettings.year || new Date().getFullYear();
-                        return `Tháng ${m}/${y}`;
-                    }
-                }
-            } catch (e) {
-                console.error('[VINH DANH] Lỗi đọc filter settings:', e);
-            }
-
-            // MẶC ĐỊNH: Luôn hiển thị tuần hiện tại (auto)
-            const currentWeek = getCurrentWeek();
-            const weekRanges = {
-                'w1': { date: new Date(2025, 11, 29) },
-                'w2': { date: new Date(2026, 0, 5) },
-                'w3': { date: new Date(2026, 0, 12) },
-                'w4': { date: new Date(2026, 0, 19) },
-                'w5': { date: new Date(2026, 0, 26) }
-            };
-
-            if (weekRanges[currentWeek]) {
-                const weekDate = weekRanges[currentWeek].date;
-                const weekRange = getWeekRange(weekDate);
-                
-                const startDay = weekRange.start.getDate();
-                const startMonth = weekRange.start.getMonth() + 1;
-                const endDay = weekRange.end.getDate();
-                const endMonth = weekRange.end.getMonth() + 1;
-
-                return `Tuần ${currentWeek.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
-            }
-
-            // Fallback cuối cùng
-            return "TUẦN";
-        }
-
         function updatePlaque() {
             if (honorsData.length === 0) return;
             const person = honorsData[currentIdx];
@@ -568,15 +480,13 @@
             // SỬ DỤNG RANK TỪ DỮ LIỆU thay vì tính toán theo index
             const rank = person.rank || 1;
 
-            let awardName = "TOP 3";
-            if (rank === 1) awardName = "TOP 1";
-            if (rank === 2) awardName = "TOP 2";
-            if (rank === 3) awardName = "TOP 3";
+            let awardName = "GIẢI KHUYẾN KHÍCH";
+            if (rank === 1) awardName = "GIẢI NHẤT DOANH SỐ";
+            if (rank === 2) awardName = "GIẢI NHÌ DOANH SỐ";
+            if (rank === 3) awardName = "GIẢI BA DOANH SỐ";
 
             document.querySelector('.main-title').innerText = awardName;
-            // Đọc timeLabel từ filter settings hiện tại thay vì từ dữ liệu cũ
-            const currentTimeLabel = getCurrentTimeLabel();
-            document.querySelector('.sub-title').innerText = "CỦA " + currentTimeLabel;
+            document.querySelector('.sub-title').innerText = "CỦA " + (person.timeLabel || "TUẦN");
 
             const img = document.getElementById('winner-img');
             img.src = person.avatar;
@@ -598,50 +508,14 @@
             updatePlaque();
         };
 
-        window.exitSlideshow = function () { window.location.href = 'BXH LUMI mới.html'; };
-
-        // Hàm load dữ liệu từ localStorage
-        function loadHonorsData() {
-            try {
-                const raw = localStorage.getItem('vinhDanhTop3');
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        honorsData = parsed;
-                        console.log('[VINH DANH] Đã load dữ liệu:', honorsData.length, 'người');
-                        return true;
-                    }
-                }
-                console.warn('[VINH DANH] Chưa có dữ liệu trong localStorage');
-                return false;
-            } catch (e) {
-                console.error('[VINH DANH] Lỗi load dữ liệu:', e);
-                return false;
-            }
-        }
+        window.exitSlideshow = function () { window.location.href = 'index.html'; };
 
         function init() {
-            // Tự động set filter về tuần hiện tại khi load trang
-            try {
-                const currentWeek = getCurrentWeek();
-                const filterSettings = {
-                    periodType: 'week',
-                    periodValue: currentWeek,
-                    month: new Date().getMonth() + 1,
-                    year: new Date().getFullYear()
-                };
-                localStorage.setItem('filterSettings', JSON.stringify(filterSettings));
-                console.log('[VINH DANH] ✅ Đã tự động set filter về tuần hiện tại:', currentWeek);
-            } catch (e) {
-                console.error('[VINH DANH] Lỗi set filter:', e);
-            }
-            
             const params = new URLSearchParams(window.location.search);
-            const isSlideshow = params.get('mode') === 'slideshow';
-
-            // Luôn load dữ liệu từ localStorage (không chỉ khi slideshow)
-            if (loadHonorsData()) {
-                if (isSlideshow) {
+            if (params.get('mode') === 'slideshow') {
+                const raw = localStorage.getItem('vinhDanhTop3');
+                if (raw) {
+                    honorsData = JSON.parse(raw);
                     document.getElementById('slideshow-controls').style.display = 'block';
                     updatePlaque();
 
@@ -651,14 +525,7 @@
                             changeSlide(1);
                         }
                     }, 60000); // 60000ms = 1 phút
-                } else {
-                    // Nếu không phải slideshow, vẫn hiển thị người đầu tiên
-                    updatePlaque();
                 }
-            } else {
-                // Nếu chưa có dữ liệu, hiển thị thông báo
-                document.querySelector('.name-pill').innerText = 'Chưa có dữ liệu';
-                document.querySelector('.main-title').innerText = 'VUI LÒNG MỞ BXH TOP 3 TRƯỚC';
             }
         }
 
@@ -731,83 +598,6 @@
 
         // Tự động tính lại vị trí kim tuyến khi resize cửa sổ
         window.addEventListener('resize', createBlingBling);
-
-        // Lắng nghe thay đổi trong localStorage để tự động cập nhật
-        window.addEventListener('storage', function (e) {
-            if (e.key === 'vinhDanhTop3') {
-                console.log('[VINH DANH] Phát hiện thay đổi dữ liệu trong localStorage');
-                if (loadHonorsData()) {
-                    currentIdx = 0; // Reset về người đầu tiên
-                    updatePlaque();
-                }
-            }
-            // Lắng nghe thay đổi filter settings
-            if (e.key === 'filterSettings') {
-                console.log('[VINH DANH] Phát hiện thay đổi filter settings, đợi dữ liệu mới...');
-                // Đợi một chút để BXH top 3.html có thời gian tính lại và lưu dữ liệu
-                setTimeout(() => {
-                    if (loadHonorsData()) {
-                        currentIdx = 0;
-                        updatePlaque();
-                    }
-                }, 1000);
-            }
-        });
-
-        // Lắng nghe postMessage từ parent window
-        window.addEventListener('message', function (event) {
-            if (event.data && event.data.type === 'honorsDataUpdated') {
-                console.log('[VINH DANH] Nhận thông báo cập nhật từ parent');
-                if (loadHonorsData()) {
-                    currentIdx = 0; // Reset về người đầu tiên
-                    updatePlaque();
-                }
-            }
-            // Lắng nghe thay đổi filter từ parent
-            if (event.data && event.data.type === 'filterUpdate') {
-                console.log('[VINH DANH] Nhận thông báo filter đã thay đổi, đợi dữ liệu mới...');
-                // Đợi một chút để BXH top 3.html có thời gian tính lại và lưu dữ liệu
-                setTimeout(() => {
-                    if (loadHonorsData()) {
-                        currentIdx = 0;
-                        updatePlaque();
-                    }
-                }, 1000);
-            }
-        });
-
-        // Polling để kiểm tra thay đổi localStorage (backup mechanism)
-        let lastHonorsDataHash = '';
-        let lastFilterHash = '';
-        setInterval(() => {
-            try {
-                const currentData = localStorage.getItem('vinhDanhTop3');
-                if (currentData && currentData !== lastHonorsDataHash) {
-                    lastHonorsDataHash = currentData;
-                    console.log('[VINH DANH] Phát hiện thay đổi dữ liệu qua polling');
-                    if (loadHonorsData()) {
-                        currentIdx = 0; // Reset về người đầu tiên
-                        updatePlaque();
-                    }
-                }
-
-                // Kiểm tra thay đổi filter settings
-                const currentFilter = localStorage.getItem('filterSettings');
-                if (currentFilter && currentFilter !== lastFilterHash) {
-                    lastFilterHash = currentFilter;
-                    console.log('[VINH DANH] Phát hiện thay đổi filter qua polling, đợi dữ liệu mới...');
-                    // Đợi một chút để BXH top 3.html có thời gian tính lại và lưu dữ liệu
-                    setTimeout(() => {
-                        if (loadHonorsData()) {
-                            currentIdx = 0;
-                            updatePlaque();
-                        }
-                    }, 1500);
-                }
-            } catch (e) {
-                console.error('[VINH DANH] Lỗi kiểm tra localStorage:', e);
-            }
-        }, 1000); // Kiểm tra mỗi giây
 
         document.addEventListener('DOMContentLoaded', () => {
             init();

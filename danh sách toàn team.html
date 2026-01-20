@@ -58,6 +58,8 @@
             padding: 0.3vh 1vw;
             margin-bottom: 0.3vh;
             position: relative;
+            flex-wrap: nowrap;
+            gap: 15px;
         }
 
         .lumi-logo {
@@ -89,7 +91,7 @@
             background-clip: text;
             color: transparent;
             text-transform: uppercase;
-            margin: 0.5vh 0;
+            margin: 0;
             white-space: nowrap;
             overflow: visible;
             display: flex;
@@ -326,14 +328,12 @@
                 alt="Lumi Logo" class="lumi-logo">
             <h1 class="lumi-brand">LUMI</h1>
         </div>
-    </div>
-
-    <div class="page-title">
-        <i class="fa-solid fa-users"></i> BXH TOÀN TEAM
-    </div>
-
-    <div id="time-range-display" style="text-align: center; margin: 1vh 0; font-size: 1vw; color: #666; font-weight: 600;">
-        <i class="fa-solid fa-calendar-days"></i> <span id="time-range-text">Đang tải...</span>
+        <div class="page-title">
+            <i class="fa-solid fa-users"></i> BXH TOÀN TEAM
+        </div>
+        <div id="time-range-display" style="text-align: center; margin: 0; font-size: 1vw; color: #666; font-weight: 600; white-space: nowrap;">
+            <i class="fa-solid fa-calendar-days"></i> <span id="time-range-text">Đang tải...</span>
+        </div>
     </div>
 
     <div class="container">

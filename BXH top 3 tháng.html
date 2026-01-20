@@ -1021,10 +1021,7 @@
         }
 
         function getAvatar(name) {
-            if (!name) {
-                let hash = 0;
-                return `https://i.pravatar.cc/150?img=${Math.abs(hash % 70)}`;
-            }
+            if (!name) return '';
             const nameTrim = name.trim();
             const nameNormalized = normalizeName(nameTrim);
             if (AVATAR_DATA_MAP.has(nameNormalized)) return AVATAR_DATA_MAP.get(nameNormalized);
@@ -1049,9 +1046,7 @@
                     if (imageLink && imageLink.trim()) return convertGoogleDriveLink(imageLink.trim());
                 }
             }
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            return `https://i.pravatar.cc/150?img=${Math.abs(hash % 70)}`;
+            return ''; // Không có ảnh thì để trống
         }
 
         // --- LOAD DATA ---

@@ -579,7 +579,7 @@
             document.querySelector('.sub-title').innerText = "CỦA " + currentTimeLabel;
 
             const img = document.getElementById('winner-img');
-            img.src = getAvatar(person.name) || '';
+            img.src = person.avatar || '';
 
             document.getElementById('winner-name').innerText = person.name;
             document.getElementById('winner-value').innerText = person.value;

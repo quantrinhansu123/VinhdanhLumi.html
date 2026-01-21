@@ -141,13 +141,15 @@
         }
 
         .container {
-            display: flex;
-            gap: 1.5vw;
-            padding: 0 1.5vw;
-            margin-top: 3vh;
-            flex-wrap: nowrap;
-            align-items: stretch;
-            min-height: 80vh; /* Tăng chiều cao tối thiểu cho bảng */
+              display: flex;
+              gap: 1.5vw;
+              padding: 0 1.5vw;
+              margin-top: 3vh;
+              flex-wrap: nowrap;
+              align-items: stretch;
+              min-height: 80vh;
+              box-sizing: border-box;
+              height: calc(100vh - 12vh);
         }
 
         .board {
@@ -200,11 +202,13 @@
         }
 
         .rank-list-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            z-index: 1;
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              width: 100%;
+              z-index: 1;
+              justify-content: space-between;
+              min-height: 40vh;
         }
 
         .rank-item {

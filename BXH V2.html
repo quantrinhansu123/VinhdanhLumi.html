@@ -489,7 +489,8 @@
             document.querySelector('.sub-title').innerText = "CỦA " + (person.timeLabel || "TUẦN");
 
             const img = document.getElementById('winner-img');
-            img.src = person.avatar || '';
+            img.src = person.avatar;
+            img.onerror = () => { img.src = `https://i.pravatar.cc/300?u=${person.name}`; };
 
             document.getElementById('winner-name').innerText = person.name;
             document.getElementById('winner-value').innerText = person.value;
@@ -507,7 +508,7 @@
             updatePlaque();
         };
 
-        window.exitSlideshow = function () { window.location.href = 'index.html'; };
+        window.exitSlideshow = function () { window.location.href = 'BXH LUMI mới.html'; };
 
         function init() {
             const params = new URLSearchParams(window.location.search);

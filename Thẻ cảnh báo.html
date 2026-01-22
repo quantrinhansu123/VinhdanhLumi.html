@@ -55,16 +55,16 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding: 0.3vh 1vw;
-            margin-bottom: 0.3vh;
+            padding: 0.5vh 1.5vw;
+            margin-bottom: 0.5vh;
             position: relative;
             background: linear-gradient(135deg, #44aa22 0%, #66cc44 100%);
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 2px 10px rgba(68, 170, 34, 0.2);
         }
 
         .lumi-logo {
-            height: 3.5vh;
+            height: 6vh;
             width: auto;
             object-fit: contain;
             mix-blend-mode: multiply;
@@ -74,7 +74,7 @@
         .lumi-brand {
             font-family: 'Montserrat', sans-serif;
             font-weight: 900;
-            font-size: 1.8vw;
+            font-size: 2.8vw;
             background: linear-gradient(to right, #11998e, #38ef7d);
             -webkit-background-clip: text;
             background-clip: text;
@@ -84,11 +84,11 @@
         }
 
         .lumi-subtitle {
-            font-size: 0.7vw;
+            font-size: 1vw;
             color: var(--text-secondary);
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
 
         .date-range-display {
@@ -1078,7 +1078,10 @@
         }
 
         function getAvatar(name) {
-            if (!name) return '';
+            if (!name) {
+                let hash = 0;
+                return `https://i.pravatar.cc/150?img=${Math.abs(hash % 70)}`;
+            }
             const nameTrim = name.trim();
             const nameNormalized = normalizeName(nameTrim);
             if (AVATAR_DATA_MAP.has(nameNormalized)) return AVATAR_DATA_MAP.get(nameNormalized);
@@ -1103,7 +1106,9 @@
                     if (imageLink && imageLink.trim()) return convertGoogleDriveLink(imageLink.trim());
                 }
             }
-            return ''; // Không có ảnh thì để trống
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            return `https://i.pravatar.cc/150?img=${Math.abs(hash % 70)}`;
         }
 
         // --- LOAD DATA ---
@@ -1490,14 +1495,11 @@
             const currentMonth = now.getMonth() + 1;
             const currentYear = now.getFullYear();
             const currentDay = now.getDate();
-            const daysFromMonthStart = currentDay;
             const timeLabel = `Tháng ${currentMonth}/${currentYear} (đến ngày ${currentDay})`;
             currentStats.timeLabel = timeLabel;
 
-            const startStr = `1/${currentMonth}/${currentYear}`;
-            const endStr = `${currentDay}/${currentMonth}/${currentYear}`;
             document.getElementById('date-range-display').innerText =
-                `${startStr} - ${endStr} (${daysFromMonthStart} ngày)`;
+                `1/${currentMonth}/${currentYear} - ${currentDay}/${currentMonth}/${currentYear}`;
 
             renderList('sale-list', stats.saleList.slice(0, 3), false);
             renderList('mkt-list', stats.mktList.slice(0, 3), false);
@@ -1598,6 +1600,88 @@
             return 'w1'; // Mặc định
         }
 
+        function toggleFilterUI() {
+            const periodTypeEl = document.getElementById('period-type');
+            if (!periodTypeEl) return; // Elements không tồn tại (đã bị ẩn), bỏ qua
+
+            const type = periodTypeEl.value;
+            const weekContainer = document.getElementById('week-filter-container');
+            const monthContainer = document.getElementById('month-filter-container');
+
+            if (weekContainer) {
+                weekContainer.style.display = type === 'week' ? 'block' : 'none';
+            }
+            if (monthContainer) {
+                monthContainer.style.display = type === 'month' ? 'flex' : 'none';
+            }
+
+            // Tự động điều chỉnh năm khi chọn tháng
+            if (type === 'month') {
+                adjustYearForMonth();
+            }
+            updateData();
+        }
+
+        function populateYears() {
+            const sel = document.getElementById('filter-year');
+            if (!sel) return; // Element không tồn tại (đã bị ẩn), bỏ qua
+            const cy = new Date().getFullYear();
+            for (let y = cy - 1; y <= cy + 1; y++) {
+                let opt = document.createElement('option');
+                opt.value = y; opt.text = "Năm " + y;
+                if (y === cy) opt.selected = true;
+                sel.appendChild(opt);
+            }
+        }
+
+        // Cập nhật các option tuần với thời gian thực tế
+        function populateWeekOptions() {
+            const weekSelect = document.getElementById('period-value');
+            if (!weekSelect) return;
+
+            const weekRanges = [
+                { id: 'w1', date: new Date(2025, 11, 29) }, // Thứ 2
+                { id: 'w2', date: new Date(2026, 0, 5) }, // Thứ 2
+                { id: 'w3', date: new Date(2026, 0, 12) }, // Thứ 2
+                { id: 'w4', date: new Date(2026, 0, 19) }, // Thứ 2
+                { id: 'w5', date: new Date(2026, 0, 26) } // Thứ 2
+            ];
+
+            weekSelect.innerHTML = ''; // Xóa các option cũ
+
+            weekRanges.forEach(week => {
+                const weekRange = getWeekRange(week.date);
+                const startDay = weekRange.start.getDate();
+                const startMonth = weekRange.start.getMonth() + 1;
+                const endDay = weekRange.end.getDate();
+                const endMonth = weekRange.end.getMonth() + 1;
+
+                const opt = document.createElement('option');
+                opt.value = week.id;
+                opt.textContent = `Tuần ${week.id.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
+                weekSelect.appendChild(opt);
+            });
+        }
+
+        // Hàm tự động điều chỉnh năm khi chọn tháng
+        function adjustYearForMonth() {
+            const monthEl = document.getElementById('filter-month');
+            const yearEl = document.getElementById('filter-year');
+            if (!monthEl || !yearEl) return; // Elements không tồn tại, bỏ qua
+
+            const selectedMonth = parseInt(monthEl.value);
+            const selectedYear = parseInt(yearEl.value);
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth() + 1; // 1-12
+            const currentYear = currentDate.getFullYear();
+
+            // Nếu chọn tháng lớn hơn tháng hiện tại và đang chọn năm hiện tại
+            // => Tự động chuyển về năm trước (vì tháng đó chưa đến)
+            if (selectedMonth > currentMonth && selectedYear === currentYear) {
+                yearEl.value = currentYear - 1;
+                console.log(`Tự động chuyển từ tháng ${selectedMonth}/${currentYear} sang tháng ${selectedMonth}/${currentYear - 1}`);
+            }
+        }
 
         function getCurrentShift() {
             const h = new Date().getHours();
@@ -1623,24 +1707,15 @@
 
                 let ruleText = '';
                 if (isSaleBoard) {
-                    // Tính threshold dựa trên số ngày trong tháng và ca hiện tại
+                    // Tính threshold dựa trên số ngày trong tháng
                     const now = new Date();
-                    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                    const daysFromMonthStart = Math.floor((now - firstDayOfMonth) / (1000 * 60 * 60 * 24)) + 1;
-
-                    // Tính threshold theo ca hiện tại
-                    const currentShift = getCurrentShift();
-                    const saleThresholdDay = 7000000; // 7 triệu cho ca ngày
-                    const saleThresholdNight = 8000000; // 8 triệu cho ca đêm
-                    const saleThreshold = (currentShift === 'Ca ngày') ? saleThresholdDay : saleThresholdNight;
+                    const daysFromMonthStart = now.getDate();
+                    const saleThreshold = 15000000; // 15 triệu
                     const saleMinRevenue = saleThreshold * daysFromMonthStart;
-                    const shiftText = (currentShift === 'Ca ngày') ? 'Ca ngày' : 'Ca đêm';
-
-                    ruleText = `Điều kiện cảnh báo Sale: Tỷ lệ chốt < 5% HOẶC Doanh số < ${(saleMinRevenue / 1000000).toFixed(1)} triệu (${(saleThreshold / 1000000)}tr × ${daysFromMonthStart} ngày - ${shiftText})`;
+                    ruleText = `Điều kiện cảnh báo Sale: Tỷ lệ chốt < 5% HOẶC Doanh số < ${(saleMinRevenue / 1000000).toFixed(1)} triệu (${(saleThreshold / 1000000)}tr × ${daysFromMonthStart} ngày)`;
                 } else if (isMktBoard) {
                     const now = new Date();
-                    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                    const daysFromMonthStart = Math.floor((now - firstDayOfMonth) / (1000 * 60 * 60 * 24)) + 1;
+                    const daysFromMonthStart = now.getDate();
                     const mktThreshold = 18000000; // 18 triệu
                     const mktMinRevenue = mktThreshold * daysFromMonthStart;
                     ruleText = `Điều kiện cảnh báo MKT: ADS Rate > 35% HOẶC Doanh số < ${(mktMinRevenue / 1000000).toFixed(1)} triệu (${(mktThreshold / 1000000)}tr × ${daysFromMonthStart} ngày)`;
@@ -1747,6 +1822,9 @@
         }
 
         function initApp() {
+            populateYears();
+            populateWeekOptions(); // Cập nhật các option tuần với thời gian thực tế
+
             // Load filter settings từ localStorage (được quản lý từ index.html)
             let filterSettings = null;
             try {
@@ -1777,6 +1855,21 @@
                 localStorage.setItem('filterSettings', JSON.stringify(filterSettings));
                 console.log(`[THẺ CẢNH BÁO] Tự động set về tuần hiện tại: ${currentWeek}`);
             }
+
+            // Áp dụng filter settings
+            if (document.getElementById('period-type')) {
+                document.getElementById('period-type').value = filterSettings.periodType || 'week';
+            }
+            if (document.getElementById('period-value')) {
+                document.getElementById('period-value').value = filterSettings.periodValue || getCurrentWeek();
+            }
+            if (document.getElementById('filter-month')) {
+                document.getElementById('filter-month').value = filterSettings.month || new Date().getMonth() + 1;
+            }
+            if (document.getElementById('filter-year')) {
+                document.getElementById('filter-year').value = filterSettings.year || new Date().getFullYear();
+            }
+            toggleFilterUI();
 
             // Lắng nghe thay đổi filter từ parent window (index.html)
             window.addEventListener('message', function (event) {
@@ -1884,103 +1977,7 @@
         }
 
         initApp();
-
-        // Auto-rotate giữa các thẻ cảnh báo sau mỗi 5 phút
-        let currentWarningIndex = 0;
-        let warningCards = [];
-        let rotationTimer = null;
-
-        function updateWarningCards() {
-            // Lấy tất cả các thẻ cảnh báo (thẻ có class warning-1, warning-2, etc.)
-            warningCards = document.querySelectorAll('.rank-item[class*="warning-"]');
-            console.log(`[AUTO-ROTATE] Tìm thấy ${warningCards.length} thẻ cảnh báo`);
-        }
-
-        function scheduleNextRotation() {
-            // Xóa timer cũ nếu có
-            if (rotationTimer) {
-                clearTimeout(rotationTimer);
-            }
-
-            // Xác định thời gian cho thẻ hiện tại
-            // Thẻ đầu tiên (index 0): 5 phút = 300,000ms
-            // Các thẻ còn lại: 10 phút = 600,000ms
-            const isFirstCard = (currentWarningIndex === 0);
-            const delay = isFirstCard ? 300000 : 600000; // 5 phút hoặc 10 phút
-
-            const delayText = isFirstCard ? '5 phút' : '10 phút';
-            console.log(`[AUTO-ROTATE] Thẻ hiện tại sẽ hiển thị trong ${delayText}`);
-
-            rotationTimer = setTimeout(() => {
-                focusNextWarning();
-                scheduleNextRotation(); // Lên lịch cho lần tiếp theo
-            }, delay);
-        }
-
-        function focusNextWarning() {
-            updateWarningCards();
-
-            if (warningCards.length === 0) {
-                console.log('[AUTO-ROTATE] Không có thẻ cảnh báo nào để hiển thị');
-                return;
-            }
-
-            // Xóa highlight của thẻ cũ
-            warningCards.forEach(card => {
-                card.style.transform = 'scale(1)';
-                card.style.transition = 'all 0.5s ease';
-                card.style.boxShadow = '';
-            });
-
-            // Focus vào thẻ tiếp theo
-            const currentCard = warningCards[currentWarningIndex];
-            if (currentCard) {
-                // Scroll đến thẻ hiện tại
-                currentCard.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                    inline: 'center'
-                });
-
-                // Highlight thẻ hiện tại
-                setTimeout(() => {
-                    currentCard.style.transform = 'scale(1.05)';
-                    currentCard.style.transition = 'all 0.5s ease';
-                    currentCard.style.boxShadow = '0 8px 30px rgba(220, 53, 69, 0.5)';
-                }, 500);
-
-                const cardNumber = currentWarningIndex + 1;
-                const isFirst = (currentWarningIndex === 0);
-                const duration = isFirst ? '5 phút' : '10 phút';
-                console.log(`[AUTO-ROTATE] Đang focus vào thẻ cảnh báo #${cardNumber}/${warningCards.length} - Hiển thị trong ${duration}`);
-            }
-
-            // Chuyển sang thẻ tiếp theo (quay vòng khi hết danh sách)
-            currentWarningIndex = (currentWarningIndex + 1) % warningCards.length;
-        }
-
-        // Chạy lần đầu sau 2 giây (để UI render xong)
-        setTimeout(() => {
-            focusNextWarning();
-            scheduleNextRotation(); // Bắt đầu lên lịch auto-rotate
-        }, 2000);
-
-        // Cập nhật lại danh sách thẻ khi dữ liệu thay đổi
-        const originalUpdateData = window.updateData;
-        if (typeof originalUpdateData === 'function') {
-            window.updateData = function () {
-                originalUpdateData.apply(this, arguments);
-                setTimeout(() => {
-                    // Reset về thẻ đầu tiên và restart timer
-                    if (rotationTimer) {
-                        clearTimeout(rotationTimer);
-                    }
-                    currentWarningIndex = 0;
-                    focusNextWarning();
-                    scheduleNextRotation();
-                }, 1000);
-            };
-        }
+        setTimeout(function () { location.reload(); }, 300000);
 
     </script>
 </body>

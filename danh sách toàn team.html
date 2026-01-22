@@ -58,8 +58,6 @@
             padding: 0.3vh 1vw;
             margin-bottom: 0.3vh;
             position: relative;
-            flex-wrap: nowrap;
-            gap: 15px;
         }
 
         .lumi-logo {
@@ -91,7 +89,7 @@
             background-clip: text;
             color: transparent;
             text-transform: uppercase;
-            margin: 0;
+            margin: 0.5vh 0;
             white-space: nowrap;
             overflow: visible;
             display: flex;
@@ -233,15 +231,8 @@
         }
 
         @keyframes bounce {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-5px);
-            }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
         }
 
         .rank-item.top-1 .avatar {
@@ -335,13 +326,14 @@
                 alt="Lumi Logo" class="lumi-logo">
             <h1 class="lumi-brand">LUMI</h1>
         </div>
-        <div class="page-title">
-            <i class="fa-solid fa-users"></i> BXH TOÀN TEAM
-        </div>
-        <div id="time-range-display"
-            style="text-align: center; margin: 0; font-size: 1vw; color: #666; font-weight: 600; white-space: nowrap;">
-            <i class="fa-solid fa-calendar-days"></i> <span id="time-range-text">Đang tải...</span>
-        </div>
+    </div>
+
+    <div class="page-title">
+        <i class="fa-solid fa-users"></i> BXH TOÀN TEAM
+    </div>
+
+    <div id="time-range-display" style="text-align: center; margin: 1vh 0; font-size: 1vw; color: #666; font-weight: 600;">
+        <i class="fa-solid fa-calendar-days"></i> <span id="time-range-text">Đang tải...</span>
     </div>
 
     <div class="container">
@@ -485,11 +477,11 @@
                 } catch (e) { }
                 const m = filterSettings ? filterSettings.month : new Date().getMonth() + 1;
                 const y = filterSettings ? filterSettings.year : new Date().getFullYear();
-
+                
                 const now = new Date();
                 const currentMonth = now.getMonth() + 1;
                 const currentYear = now.getFullYear();
-
+                
                 // Nếu là tháng hiện tại, CHỈ tính tuần hiện tại (không tính từ đầu tháng)
                 if (m === currentMonth && y === currentYear) {
                     const currentWeek = getCurrentWeek();
@@ -499,7 +491,7 @@
                     else if (currentWeek === 'w3') { weekStartDate = new Date(2026, 0, 12); }
                     else if (currentWeek === 'w4') { weekStartDate = new Date(2026, 0, 19); }
                     else { weekStartDate = new Date(2026, 0, 26); }
-
+                    
                     const weekRange = getWeekRange(weekStartDate);
                     start = weekRange.start; // Bắt đầu từ thứ 2 của tuần hiện tại
                     end = weekRange.end; // Kết thúc vào chủ nhật của tuần hiện tại
@@ -630,7 +622,10 @@
         }
 
         function getAvatar(name) {
-            if (!name) return '';
+            if (!name) {
+                let hash = 0;
+                return `https://i.pravatar.cc/150?img=${Math.abs(hash % 70)}`;
+            }
             const nameTrim = name.trim();
             const nameNormalized = normalizeName(nameTrim);
             if (AVATAR_DATA_MAP.has(nameNormalized)) return AVATAR_DATA_MAP.get(nameNormalized);
@@ -655,7 +650,9 @@
                     if (imageLink && imageLink.trim()) return convertGoogleDriveLink(imageLink.trim());
                 }
             }
-            return ''; // Không có ảnh thì để trống
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            return `https://i.pravatar.cc/150?img=${Math.abs(hash % 70)}`;
         }
 
         function getCurrentShift() {
@@ -690,7 +687,7 @@
                 console.error('[BXH TOÀN TEAM] Không tìm thấy container:', containerId);
                 return;
             }
-
+            
             if (!data || data.length === 0) {
                 console.warn(`[BXH TOÀN TEAM] Không có dữ liệu cho ${containerId}`);
                 container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu</div>';
@@ -710,11 +707,11 @@
                 const rank = index + 1;
                 const crown = rank === 1 ? '<i class="fa-solid fa-crown avatar-crown"></i>' : '';
                 const topClass = rank <= 3 ? `top-${rank}` : '';
-
+                
                 // Đảm bảo các trường cần thiết có giá trị
                 const displayValue = item.value || formatMoney(item.rawVal || 0);
                 const displayPercent = item.percent !== undefined ? item.percent : 0;
-
+                
                 // Hiển thị thông số tùy theo loại team
                 let metricsHtml = '';
                 if (isSale && item.closeRate) {
@@ -748,9 +745,9 @@
                     </div>
                 </div>`;
             });
-
+            
             container.innerHTML = html;
-
+            
             // Animate bars sau khi render
             setTimeout(() => {
                 container.querySelectorAll('.bar-fill').forEach(bar => {
@@ -807,7 +804,7 @@
                 } else {
                     console.warn('[BXH TOÀN TEAM] ⚠️ Sales Report API không trả về dữ liệu:', resReport ? resReport.status : 'no response');
                 }
-
+                
                 if (resMkt && resMkt.ok) {
                     const json = await resMkt.json();
                     mktReportData = Array.isArray(json) ? json : (json.data || []);
@@ -815,7 +812,7 @@
                 } else {
                     console.warn('[BXH TOÀN TEAM] ⚠️ MKT Report API không trả về dữ liệu:', resMkt ? resMkt.status : 'no response');
                 }
-
+                
                 if (resHr && resHr.ok) {
                     const data = await resHr.json();
                     hrData = Array.isArray(data) ? data : Object.values(data);
@@ -834,7 +831,7 @@
                 }
 
                 console.log('[BXH TOÀN TEAM] ✅ Hoàn thành load dữ liệu');
-
+                
                 // Chỉ gọi updateData() nếu đây là lần load đầu tiên (không phải từ pending update)
                 if (!pendingUpdate) {
                     updateData();
@@ -853,7 +850,7 @@
         function calculateStats(startDate, endDate, filterCancelled, isCurrentPeriod = false) {
             console.log(`[BXH TOÀN TEAM] 📊 Tính toán stats từ ${startDate.toLocaleDateString('vi-VN')} đến ${endDate.toLocaleDateString('vi-VN')}`);
             console.log(`[BXH TOÀN TEAM] 📦 Tổng số đơn hàng trong database: ${allOrders.length}`);
-
+            
             let debugStats = {
                 totalOrders: allOrders.length,
                 hasDate: 0,
@@ -862,7 +859,7 @@
                 passedStatus: 0,
                 final: 0
             };
-
+            
             const periodOrders = allOrders.filter(o => {
                 const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Ngay len don", "Date"]);
                 const d = parseDateSafe(rawDate);
@@ -885,7 +882,7 @@
 
                 return true;
             });
-
+            
             debugStats.final = periodOrders.length;
             console.log(`[BXH TOÀN TEAM] 🔍 Debug Stats:`, debugStats);
             console.log(`[BXH TOÀN TEAM] 📦 Tổng số đơn hàng trong khoảng thời gian: ${periodOrders.length}`);
@@ -915,10 +912,10 @@
                     ordersWithMkt++;
                 }
             });
-
+            
             console.log(`[BXH TOÀN TEAM] 👥 Đơn hàng có Sale: ${ordersWithSale}, Đơn hàng có MKT: ${ordersWithMkt}`);
             console.log(`[BXH TOÀN TEAM] 👥 saleMap keys: ${Object.keys(saleMap).length}, mktMap keys: ${Object.keys(mktMap).length}`);
-
+            
             if (Object.keys(saleMap).length === 0 && ordersWithSale > 0) {
                 console.warn(`[BXH TOÀN TEAM] ⚠️ Có ${ordersWithSale} đơn hàng có Sale nhưng saleMap rỗng!`);
             }
@@ -1024,10 +1021,10 @@
         // ========== UPDATE DATA ==========
         let isDataLoading = false;
         let pendingUpdate = false;
-
+        
         function updateData() {
             console.log('[BXH TOÀN TEAM] 🔄 ========== BẮT ĐẦU CẬP NHẬT DỮ LIỆU ==========');
-
+            
             // Kiểm tra xem dữ liệu đã được load chưa
             if (allOrders.length === 0) {
                 if (!isDataLoading) {
@@ -1051,7 +1048,7 @@
                 }
                 return;
             }
-
+            
             // ĐỌC FILTER SETTINGS MỚI NHẤT TỪ LOCALSTORAGE
             let filterSettings = null;
             try {
@@ -1084,7 +1081,7 @@
             const type = filterSettings.periodType || 'week';
             const weekValue = filterSettings.periodValue || getCurrentWeek();
             const isCurrentPeriod = checkIsCurrentPeriod(type, weekValue);
-
+            
             console.log('[BXH TOÀN TEAM] 📊 Filter được sử dụng:', {
                 type: type,
                 weekValue: weekValue,
@@ -1102,14 +1099,14 @@
                 endTime: end.getTime(),
                 daysDiff: daysDiff
             });
-
+            
             const shouldFilterStatus = (type === 'month') || (type === 'week' && !isCurrentPeriod);
             console.log('[BXH TOÀN TEAM] 🔍 Tham số tính toán:', {
                 shouldFilterStatus: shouldFilterStatus,
                 isCurrentPeriod: isCurrentPeriod,
                 filterType: type
             });
-
+            
             const stats = calculateStats(start, end, shouldFilterStatus, isCurrentPeriod);
 
             // Cập nhật hiển thị thời gian
@@ -1135,7 +1132,7 @@
             // LUÔN đọc từ filterSettings để đảm bảo hiển thị đúng theo filter hiện tại
             let displayText = '';
             let start, end;
-
+            
             try {
                 const filterSettingsStr = localStorage.getItem('filterSettings');
                 if (!filterSettingsStr) {
@@ -1147,7 +1144,7 @@
                 const filterSettings = JSON.parse(filterSettingsStr);
                 const type = filterSettings.periodType || 'week';
                 const value = filterSettings.periodValue || '';
-
+                
                 if (type === 'week') {
                     // Tính toán khoảng thời gian thực tế từ filter
                     let weekStartDate;
@@ -1156,20 +1153,20 @@
                     else if (value === 'w3') { weekStartDate = new Date(2026, 0, 12); }
                     else if (value === 'w4') { weekStartDate = new Date(2026, 0, 19); }
                     else { weekStartDate = new Date(2026, 0, 26); }
-
+                    
                     const day = weekStartDate.getDay();
                     const diff = day === 0 ? -6 : 1 - day;
                     const monday = new Date(weekStartDate);
                     monday.setDate(weekStartDate.getDate() + diff);
                     monday.setHours(0, 0, 0, 0);
-
+                    
                     const sunday = new Date(monday);
                     sunday.setDate(monday.getDate() + 6);
                     sunday.setHours(23, 59, 59, 999);
-
+                    
                     start = monday;
                     end = sunday;
-
+                    
                     const weekNum = value.replace('w', '');
                     const startStr = `${start.getDate()}/${start.getMonth() + 1}/${start.getFullYear()}`;
                     const endStr = `${end.getDate()}/${end.getMonth() + 1}/${end.getFullYear()}`;
@@ -1201,7 +1198,7 @@
         loadData();
 
         // Lắng nghe thay đổi filter settings
-        window.addEventListener('storage', function (e) {
+        window.addEventListener('storage', function(e) {
             if (e.key === 'filterSettings') {
                 console.log('[BXH TOÀN TEAM] 📨 Filter settings đã thay đổi (storage event), cập nhật hiển thị và tính toán lại dữ liệu...');
                 // Cập nhật hiển thị thời gian ngay lập tức
@@ -1210,9 +1207,9 @@
                 updateData();
             }
         });
-
+        
         // Lắng nghe message từ parent (index.html)
-        window.addEventListener('message', function (event) {
+        window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'filterChanged') {
                 console.log('[BXH TOÀN TEAM] 📨 Nhận message filterChanged từ parent, cập nhật hiển thị và tính toán lại dữ liệu...');
                 // Cập nhật hiển thị thời gian ngay lập tức
@@ -1223,7 +1220,7 @@
         });
 
         // Lắng nghe postMessage từ parent window
-        window.addEventListener('message', function (event) {
+        window.addEventListener('message', function(event) {
             // Lắng nghe thay đổi filter từ parent
             if (event.data && event.data.type === 'filterChanged') {
                 console.log('[BXH TOÀN TEAM] 📨 Nhận thông báo filter đã thay đổi, tính toán lại dữ liệu...');
@@ -1242,7 +1239,7 @@
                     try {
                         const filterSettings = JSON.parse(currentFilter);
                         console.log('[BXH TOÀN TEAM] 📋 Filter mới từ localStorage:', filterSettings);
-                    } catch (e) { }
+                    } catch (e) {}
                     // Cập nhật hiển thị thời gian ngay lập tức
                     updateTimeRangeDisplay(null);
                     // Đảm bảo dữ liệu đã load xong trước khi update

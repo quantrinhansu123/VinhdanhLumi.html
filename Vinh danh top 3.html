@@ -401,10 +401,14 @@
 
 <body>
     <div id="youtube-player" style="display:none;"></div>
+    <div id="youtube-bg-player" style="display:none;"></div>
 
     <div id="slideshow-controls">
         <button class="nav-arrow nav-prev" onclick="changeSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
         <button class="nav-arrow nav-next" onclick="changeSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="btn-sound" id="btn-sound" onclick="toggleSound()">
+            <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+        </button>
     </div>
 
     <div class="plaque-container">
@@ -458,11 +462,11 @@
             if (!youtubePlayer) {
                 youtubePlayer = new YT.Player('youtube-player', {
                     height: '1', width: '1', videoId: 'j3nBuwOPu8A',
-                    playerVars: { 'autoplay': 0, 'loop': 1, 'playlist': 'j3nBuwOPu8A', 'controls': 0, 'showinfo': 0, 'rel': 0, 'mute': 0 },
+                    playerVars: { 'autoplay': 1, 'loop': 1, 'playlist': 'j3nBuwOPu8A', 'controls': 0, 'showinfo': 0, 'rel': 0 },
                     events: {
                         'onReady': (e) => {
                             e.target.setVolume(100);
-                            // Không tự động phát, chờ người dùng nhấn nút loa
+                            e.target.playVideo();
                         },
                         'onError': (e) => {
                             console.error('YouTube player error:', e.data);
@@ -548,7 +552,7 @@
             if (weekRanges[currentWeek]) {
                 const weekDate = weekRanges[currentWeek].date;
                 const weekRange = getWeekRange(weekDate);
-
+                
                 const startDay = weekRange.start.getDate();
                 const startMonth = weekRange.start.getMonth() + 1;
                 const endDay = weekRange.end.getDate();
@@ -579,7 +583,8 @@
             document.querySelector('.sub-title').innerText = "CỦA " + currentTimeLabel;
 
             const img = document.getElementById('winner-img');
-            img.src = person.avatar || '';
+            img.src = person.avatar;
+            img.onerror = () => { img.src = `https://i.pravatar.cc/300?u=${person.name}`; };
 
             document.getElementById('winner-name').innerText = person.name;
             document.getElementById('winner-value').innerText = person.value;
@@ -607,11 +612,11 @@
                     const parsed = JSON.parse(raw);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         honorsData = parsed;
-                        console.log('[VINH DANH] Đã load dữ liệu từ localStorage:', honorsData.length, 'người');
+                        console.log('[VINH DANH] Đã load dữ liệu:', honorsData.length, 'người');
                         return true;
                     }
                 }
-                console.warn('[VINH DANH] Chưa có dữ liệu trong localStorage, sẽ fetch từ API');
+                console.warn('[VINH DANH] Chưa có dữ liệu trong localStorage');
                 return false;
             } catch (e) {
                 console.error('[VINH DANH] Lỗi load dữ liệu:', e);
@@ -619,327 +624,42 @@
             }
         }
 
-        // === AUTO-LOAD DATA FROM API ===
-        const F3_URL = 'https://n-api-gamma.vercel.app/sheet/F3/data';
-        const REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo sale';
-        const MKT_REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo MKT';
-        const HR_URL = 'https://lumi-6dff7-default-rtdb.asia-southeast1.firebasedatabase.app/datasheet/Nh%C3%A2ns%E1%BB%B1';
-
-        let allOrders = [];
-        let salesReportData = [];
-        let mktReportData = [];
-        let hrData = [];
-        let hrDataMap = null;
-
-        // Helper functions (copy từ BXH top 3.html)
-        function findVal(obj, keys) {
-            if (!obj) return null;
-            if (!Array.isArray(keys)) keys = [keys];
-            const lowerKeys = keys.map(k => k.toLowerCase().trim());
-            for (let k in obj) {
-                if (lowerKeys.includes(k.toLowerCase().trim())) return obj[k];
-            }
-            return null;
-        }
-
-        function parseDateSafe(dateInput) {
-            if (!dateInput) return null;
-            if (dateInput instanceof Date) return dateInput;
-            const str = String(dateInput).trim();
-            if (!str) return null;
-
-            if (str.includes('-')) {
-                const parts = str.split('-');
-                if (parts.length === 3) {
-                    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                }
-            }
-            if (str.includes('/')) {
-                const parts = str.split('/');
-                if (parts.length === 3) {
-                    return new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
-                }
-            }
-            const d = new Date(str);
-            return isNaN(d.getTime()) ? null : d;
-        }
-
-        function normalizeName(name) {
-            if (!name) return '';
-            return name.toString().trim().replace(/\s+/g, ' ').toLowerCase();
-        }
-
-        function formatMoney(num) {
-            if (!num) return '0';
-            if (num >= 1000000) return Math.round(num / 1000000) + ' Tr';
-            return Math.round(num).toLocaleString('vi-VN');
-        }
-
-        function parseMoney(moneyStr) {
-            if (typeof moneyStr === 'number') return moneyStr;
-            return parseInt(String(moneyStr || 0).replace(/\./g, '').replace(/,/g, '').replace(/\D/g, '')) || 0;
-        }
-
-        function extractGoogleDriveFileId(link) {
-            if (!link) return null;
-            const str = link.toString().trim();
-            let m = str.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if (m) return m[1];
-            m = str.match(/[?&]id=([a-zA-Z0-9_-]+)/); if (m) return m[1];
-            m = str.match(/open[?&]id=([a-zA-Z0-9_-]+)/); if (m) return m[1];
-            return null;
-        }
-
-        function convertGoogleDriveLink(link) {
-            if (!link) return link;
-            const fileId = extractGoogleDriveFileId(link);
-            return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : link;
-        }
-
-        const AVATAR_DATA_MAP = new Map();
-        function buildHRDataMap() {
-            if (!hrData || hrData.length === 0) { hrDataMap = null; return; }
-            hrDataMap = new Map();
-            hrData.forEach(record => {
-                const recordName = (record['Họ Và Tên'] || record['Tên'] || record['Name'] || '').toString().trim();
-                if (recordName) hrDataMap.set(normalizeName(recordName), record);
-            });
-        }
-
-        function getAvatar(name) {
-            if (!name) return '';
-            const nameTrim = name.trim();
-            const nameNormalized = normalizeName(nameTrim);
-            if (AVATAR_DATA_MAP.has(nameNormalized)) return AVATAR_DATA_MAP.get(nameNormalized);
-            if (!hrDataMap && hrData && hrData.length > 0) buildHRDataMap();
-            if (hrDataMap) {
-                const hrRecord = hrDataMap.get(nameNormalized);
-                if (hrRecord) {
-                    let imageLink = hrRecord['Link ảnh'] || hrRecord['link ảnh'] || hrRecord['Link_ảnh'];
-                    if (imageLink && imageLink.trim()) return convertGoogleDriveLink(imageLink.trim());
-                }
-            }
-            return ''; // Không có ảnh thì để trống
-        }
-
-        function getCurrentShift() {
-            const h = new Date().getHours();
-            return (h >= 7 && h < 19) ? 'Ca ngày' : 'Ca Đêm';
-        }
-
-        function isStaffInShift(name, shift) {
-            if (!hrDataMap || !hrDataMap.has(normalizeName(name))) return true;
-            const rec = hrDataMap.get(normalizeName(name));
-            const ca = String(findVal(rec, ['Ca', 'Ca làm việc']) || '').toLowerCase();
-            if (shift === 'Ca ngày') return ca.includes('ngày') || ca.includes('ngay');
-            if (shift === 'Ca Đêm') return ca.includes('đêm') || ca.includes('dem');
-            return true;
-        }
-
-        function getDateRange() {
-            const currentWeek = getCurrentWeek();
-            let start, end;
-            if (currentWeek === 'w1') { start = new Date(2025, 11, 29); end = new Date(2026, 0, 4); }
-            else if (currentWeek === 'w2') { start = new Date(2026, 0, 5); end = new Date(2026, 0, 11); }
-            else if (currentWeek === 'w3') { start = new Date(2026, 0, 12); end = new Date(2026, 0, 18); }
-            else if (currentWeek === 'w4') { start = new Date(2026, 0, 19); end = new Date(2026, 0, 25); }
-            else { start = new Date(2026, 0, 26); end = new Date(2026, 1, 1); }
-            start.setHours(0, 0, 0, 0); end.setHours(23, 59, 59, 999);
-            return { start, end };
-        }
-
-        async function fetchAllData() {
-            console.log('[VINH DANH] Đang fetch dữ liệu từ API...');
-            document.querySelector('.name-pill').innerText = 'Đang tải dữ liệu...';
-            document.querySelector('.main-title').innerText = 'VUI LÒNG ĐỢI';
-
-            try {
-                const [resF3, resReport, resMkt, resHr] = await Promise.all([
-                    fetch(F3_URL).catch(() => null),
-                    fetch(REPORT_URL).catch(() => null),
-                    fetch(MKT_REPORT_URL).catch(() => null),
-                    fetch(HR_URL + '.json').catch(() => null)
-                ]);
-
-                if (resF3 && resF3.ok) {
-                    const json = await resF3.json();
-                    allOrders = Array.isArray(json) ? json : (json.data || Object.values(json.data || json));
-                }
-                if (resReport && resReport.ok) {
-                    const json = await resReport.json();
-                    salesReportData = Array.isArray(json) ? json : (json.data || []);
-                }
-                if (resMkt && resMkt.ok) {
-                    const json = await resMkt.json();
-                    mktReportData = Array.isArray(json) ? json : (json.data || []);
-                }
-                if (resHr && resHr.ok) {
-                    const data = await resHr.json();
-                    hrData = Array.isArray(data) ? data : Object.values(data);
-                    buildHRDataMap();
-                }
-
-                console.log('[VINH DANH] ✅ Đã fetch xong dữ liệu');
-                return true;
-            } catch (e) {
-                console.error('[VINH DANH] Lỗi fetch data:', e);
-                return false;
-            }
-        }
-
-        function calculateTop3() {
-            console.log('[VINH DANH] Đang tính toán top 3...');
-            const { start, end } = getDateRange();
-            const isCurrentPeriod = true; // Luôn là tuần hiện tại
-
-            const periodOrders = allOrders.filter(o => {
-                const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Date"]);
-                const d = parseDateSafe(rawDate);
-                if (!d) return false;
-                const team = String(findVal(o, ["Team", "TEAM", "Bộ phận"]) || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                const hasHanoi = team.includes("ha noi") || team.includes("hanoi") || team.includes("hn");
-                if (!hasHanoi) return false;
-                return (d >= start && d <= end);
-            });
-
-            const saleMap = {}, mktMap = {}, saleOrderCount = {};
-            periodOrders.forEach(o => {
-                const money = parseMoney(findVal(o, ["Tổng tiền VNĐ", "Total"]));
-                const saleName = String(findVal(o, ["Nhân_viên_Sale", "Nhân viên Sale", "Sale"]) || "").trim();
-                if (saleName) {
-                    if (!saleMap[saleName]) saleMap[saleName] = 0;
-                    if (!saleOrderCount[saleName]) saleOrderCount[saleName] = 0;
-                    saleMap[saleName] += money;
-                    saleOrderCount[saleName] += 1;
-                }
-                const mktName = String(findVal(o, ["Nhân_viên_Marketing", "Nhân viên Marketing", "MKT"]) || "").trim();
-                if (mktName) {
-                    if (!mktMap[mktName]) mktMap[mktName] = 0;
-                    mktMap[mktName] += money;
-                }
-            });
-
-            const EXCLUDED = ['Mai Thị Lý', 'Phạm Hải Yến', 'Trần Thị Nhung', 'Lê Ngọc Đài Trang', 'Đinh Thị Hoài Thư', 'Đỗ Thị Thu Hằng', 'Đinh Văn Khải', 'Lê Trung Hiếu', 'page-MCN'];
-            const aggressiveFilter = (i) => {
-                const n = i.name.toLowerCase();
-                return !EXCLUDED.includes(i.name) && !n.includes('lumi') && !n.includes('page') && !n.includes('mcn');
-            };
-
-            let saleList = Object.keys(saleMap).map(name => ({ name, rawVal: saleMap[name], value: formatMoney(saleMap[name]), avatar: getAvatar(name) }))
-                .sort((a, b) => b.rawVal - a.rawVal).filter(aggressiveFilter);
-            const currentShift = getCurrentShift();
-            saleList = saleList.filter(i => isStaffInShift(i.name, currentShift));
-
-            let mktList = Object.keys(mktMap).map(name => ({ name, rawVal: mktMap[name], value: formatMoney(mktMap[name]), avatar: getAvatar(name) }))
-                .sort((a, b) => b.rawVal - a.rawVal).filter(aggressiveFilter);
-
-            // Add metrics
-            saleList.forEach(item => {
-                const reports = salesReportData.filter(r => {
-                    const rName = String(findVal(r, ["Tên", "Name"]) || "").trim();
-                    if (normalizeName(rName) !== normalizeName(item.name)) return false;
-                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Date"]));
-                    return !rDate || (rDate >= start && rDate <= end);
-                });
-                let totalMess = 0;
-                reports.forEach(r => { totalMess += Number(findVal(r, ["Số Mess", "Mess"]) || 0); });
-                item.totalMess = totalMess;
-                item.totalOrders = saleOrderCount[item.name] || 0;
-                item.closeRate = totalMess > 0 ? ((item.totalOrders / totalMess) * 100).toFixed(1) + "%" : "0%";
-            });
-
-            mktList.forEach(item => {
-                const reports = mktReportData.filter(r => {
-                    const rName = String(findVal(r, ["Tên", "Name"]) || "").trim();
-                    if (normalizeName(rName) !== normalizeName(item.name)) return false;
-                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Date"]));
-                    return !rDate || (rDate >= start && rDate <= end);
-                });
-                let totalCPQC = 0;
-                reports.forEach(r => {
-                    const ca = String(findVal(r, ["ca", "Ca"]) || "").trim().toLowerCase();
-                    if (ca === "hết ca" || ca === "het ca") {
-                        totalCPQC += parseMoney(findVal(r, ["CPQC", "Chi phí QC"]) || 0);
+        // Hàm tự động load BXH top 3 để tính toán dữ liệu
+        function triggerBXHTop3Load() {
+            console.log('[VINH DANH] Chưa có dữ liệu, đang trigger load BXH top 3...');
+            const hiddenFrame = document.createElement('iframe');
+            hiddenFrame.style.position = 'absolute';
+            hiddenFrame.style.left = '-9999px';
+            hiddenFrame.style.width = '1px';
+            hiddenFrame.style.height = '1px';
+            hiddenFrame.src = './BXH top 3.html';
+            hiddenFrame.onload = function() {
+                console.log('[VINH DANH] BXH top 3 đã load, đợi tính toán dữ liệu...');
+                // Đợi 3 giây để BXH top 3 tính toán và lưu dữ liệu
+                setTimeout(() => {
+                    if (loadHonorsData()) {
+                        console.log('[VINH DANH] Đã load được dữ liệu từ BXH top 3');
+                        updatePlaque();
                     }
-                });
-                item.cpqc = totalCPQC;
-                item.adsRate = item.rawVal > 0 ? (totalCPQC / item.rawVal) * 100 : 0;
-                item.displayRate = item.adsRate.toFixed(1) + "%";
-            });
-
-            // Apply performance filters
-            if (!isCurrentPeriod) {
-                saleList = saleList.filter(item => (parseFloat(item.closeRate) >= 9) || !item.totalMess);
-            }
-            mktList = mktList.filter(item => (item.adsRate <= 27) || !item.rawVal);
-
-            // Get top 3
-            const topSale = saleList.slice(0, 3);
-            const topMkt = mktList.slice(0, 3);
-
-            // Build honors data
-            const honors = [];
-            const timeLabel = getCurrentTimeLabel();
-
-            topSale.forEach((p, i) => {
-                honors.push({
-                    rank: i + 1, name: p.name, avatar: p.avatar, value: p.value,
-                    timeLabel: timeLabel, dept: 'SALE', closeRate: p.closeRate, teamName: 'Bộ phận Sale'
-                });
-            });
-            topMkt.forEach((p, i) => {
-                honors.push({
-                    rank: i + 1, name: p.name, avatar: p.avatar, value: p.value,
-                    timeLabel: timeLabel, dept: 'MKT', displayRate: p.displayRate, teamName: 'Bộ phận Marketing'
-                });
-            });
-
-            console.log('[VINH DANH] ✅ Đã tính toán xong top 3:', honors.length, 'người');
-            return honors;
+                    // Xóa iframe sau khi xong
+                    if (hiddenFrame.parentNode) {
+                        hiddenFrame.parentNode.removeChild(hiddenFrame);
+                    }
+                }, 3000);
+            };
+            document.body.appendChild(hiddenFrame);
         }
 
-        async function init() {
-            // Tự động set filter về tuần hiện tại khi load trang
-            try {
-                const currentWeek = getCurrentWeek();
-                const filterSettings = {
-                    periodType: 'week',
-                    periodValue: currentWeek,
-                    month: new Date().getMonth() + 1,
-                    year: new Date().getFullYear()
-                };
-                localStorage.setItem('filterSettings', JSON.stringify(filterSettings));
-                console.log('[VINH DANH] ✅ Đã tự động set filter về tuần hiện tại:', currentWeek);
-            } catch (e) {
-                console.error('[VINH DANH] Lỗi set filter:', e);
-            }
-
+        function init() {
             const params = new URLSearchParams(window.location.search);
             const isSlideshow = params.get('mode') === 'slideshow';
 
-            // Thử load từ localStorage trước
-            let hasData = loadHonorsData();
-
-            // Nếu không có dữ liệu, fetch từ API
-            if (!hasData) {
-                const fetchSuccess = await fetchAllData();
-                if (fetchSuccess) {
-                    honorsData = calculateTop3();
-                    // Lưu vào localStorage để lần sau dùng
-                    try {
-                        localStorage.setItem('vinhDanhTop3', JSON.stringify(honorsData));
-                        console.log('[VINH DANH] ✅ Đã lưu dữ liệu vào localStorage');
-                    } catch (e) {
-                        console.error('[VINH DANH] Lỗi lưu localStorage:', e);
-                    }
-                    hasData = (honorsData.length > 0);
-                }
-            }
-
-            // Hiển thị dữ liệu
-            if (hasData) {
+            // Luôn load dữ liệu từ localStorage (không chỉ khi slideshow)
+            if (loadHonorsData()) {
                 if (isSlideshow) {
                     document.getElementById('slideshow-controls').style.display = 'block';
                     updatePlaque();
+
                     // Tự động next sang nhân viên tiếp theo sau mỗi 1 phút (60 giây)
                     setInterval(() => {
                         if (honorsData.length > 0) {
@@ -951,9 +671,24 @@
                     updatePlaque();
                 }
             } else {
-                // Nếu vẫn chưa có dữ liệu, hiển thị thông báo
-                document.querySelector('.name-pill').innerText = 'Không có dữ liệu';
-                document.querySelector('.main-title').innerText = 'VUI LÒNG THỬ LẠI SAU';
+                // Nếu chưa có dữ liệu, tự động trigger load BXH top 3
+                console.log('[VINH DANH] Chưa có dữ liệu, đang tự động load BXH top 3...');
+                document.querySelector('.name-pill').innerText = 'Đang tải dữ liệu...';
+                document.querySelector('.main-title').innerText = 'VUI LÒNG ĐỢI';
+                
+                // Đợi một chút rồi thử lại (có thể index.html đã trigger load BXH top 3)
+                setTimeout(() => {
+                    if (!loadHonorsData()) {
+                        // Nếu vẫn chưa có, tự động trigger load
+                        triggerBXHTop3Load();
+                    } else {
+                        // Nếu đã có dữ liệu, cập nhật
+                        if (isSlideshow) {
+                            document.getElementById('slideshow-controls').style.display = 'block';
+                        }
+                        updatePlaque();
+                    }
+                }, 2000);
             }
         }
 
@@ -1074,15 +809,37 @@
         // Polling để kiểm tra thay đổi localStorage (backup mechanism)
         let lastHonorsDataHash = '';
         let lastFilterHash = '';
+        let hasInitialData = false;
+        
         setInterval(() => {
             try {
                 const currentData = localStorage.getItem('vinhDanhTop3');
-                if (currentData && currentData !== lastHonorsDataHash) {
-                    lastHonorsDataHash = currentData;
-                    console.log('[VINH DANH] Phát hiện thay đổi dữ liệu qua polling');
-                    if (loadHonorsData()) {
-                        currentIdx = 0; // Reset về người đầu tiên
-                        updatePlaque();
+                
+                // Phát hiện khi dữ liệu xuất hiện lần đầu hoặc thay đổi
+                if (currentData) {
+                    if (!hasInitialData || currentData !== lastHonorsDataHash) {
+                        lastHonorsDataHash = currentData;
+                        hasInitialData = true;
+                        console.log('[VINH DANH] Phát hiện dữ liệu qua polling');
+                        if (loadHonorsData()) {
+                            currentIdx = 0; // Reset về người đầu tiên
+                            updatePlaque();
+                            // Ẩn thông báo "Đang tải dữ liệu" nếu có
+                            const namePill = document.querySelector('.name-pill');
+                            const mainTitle = document.querySelector('.main-title');
+                            if (namePill && namePill.innerText === 'Đang tải dữ liệu...') {
+                                namePill.innerText = '';
+                            }
+                            if (mainTitle && mainTitle.innerText === 'VUI LÒNG ĐỢI') {
+                                mainTitle.innerText = '';
+                            }
+                        }
+                    }
+                } else {
+                    // Nếu dữ liệu bị xóa, reset flag
+                    if (hasInitialData) {
+                        hasInitialData = false;
+                        lastHonorsDataHash = '';
                     }
                 }
 

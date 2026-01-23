@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Lấy danh sách nhân sự team Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            color: red;
+            background: #ffe6e6;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Danh sách nhân sự Team Test</h1>
+    <div id="result" class="result loading">Đang tải dữ liệu...</div>
+
+    <script>
+        const HR_URL = 'https://lumi-6dff7-default-rtdb.asia-southeast1.firebasedatabase.app/datasheet/Nh%C3%A2ns%E1%BB%B1';
+
+        function normalizeName(name) {
+            if (!name) return '';
+            return String(name).toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        function findVal(obj, keys) {
+            if (!obj) return null;
+            if (!Array.isArray(keys)) keys = [keys];
+            const lowerKeys = keys.map(k => k.toLowerCase().trim());
+            for (let k in obj) {
+                if (lowerKeys.includes(k.toLowerCase().trim())) {
+                    return obj[k];
+                }
+            }
+            return null;
+        }
+
+        async function loadTeamTest() {
+            try {
+                const response = await fetch(HR_URL + '.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const hrData = Array.isArray(data) ? data : Object.values(data);
+                
+                console.log('Tổng số nhân sự:', hrData.length);
+                
+                // Lọc nhân sự có team là "test" (không phân biệt hoa thường)
+                const teamTestMembers = hrData.filter(record => {
+                    const team = findVal(record, ['Team', 'TEAM', 'team', 'Bộ phận', 'Bộ Phận']);
+                    const teamStr = String(team || '').toLowerCase().trim();
+                    return teamStr === 'test';
+                });
+
+                console.log('Số nhân sự team Test:', teamTestMembers.length);
+
+                const resultDiv = document.getElementById('result');
+                
+                if (teamTestMembers.length === 0) {
+                    resultDiv.innerHTML = '<div class="error">Không tìm thấy nhân sự nào trong team Test</div>';
+                    return;
+                }
+
+                // Tạo bảng hiển thị
+                let html = `<h2>Tìm thấy ${teamTestMembers.length} nhân sự trong team Test:</h2>`;
+                html += '<table>';
+                html += '<thead><tr><th>STT</th><th>Họ và Tên</th><th>Team</th><th>Chức vụ</th><th>Chi nhánh</th><th>Email</th><th>Số điện thoại</th></tr></thead>';
+                html += '<tbody>';
+
+                teamTestMembers.forEach((member, index) => {
+                    const name = findVal(member, ['Họ và Tên', 'Họ Và Tên', 'Họ và tên', 'Tên', 'Name', 'Họ tên']);
+                    const team = findVal(member, ['Team', 'TEAM', 'team', 'Bộ phận', 'Bộ Phận']);
+                    const position = findVal(member, ['Chức vụ', 'Vị trí', 'Position', 'Chức vụ']);
+                    const branch = findVal(member, ['Chi nhánh', 'chi nhánh', 'Chi Nhánh', 'Branch']);
+                    const email = findVal(member, ['Email', 'email', 'E-mail']);
+                    const phone = findVal(member, ['Số điện thoại', 'Số Điện Thoại', 'Phone', 'Điện thoại', 'SĐT']);
+
+                    html += `<tr>`;
+                    html += `<td>${index + 1}</td>`;
+                    html += `<td><strong>${name || 'N/A'}</strong></td>`;
+                    html += `<td>${team || 'N/A'}</td>`;
+                    html += `<td>${position || 'N/A'}</td>`;
+                    html += `<td>${branch || 'N/A'}</td>`;
+                    html += `<td>${email || 'N/A'}</td>`;
+                    html += `<td>${phone || 'N/A'}</td>`;
+                    html += `</tr>`;
+                });
+
+                html += '</tbody></table>';
+
+                // Thêm danh sách tên đơn giản
+                html += '<h3>Danh sách tên:</h3>';
+                html += '<ul>';
+                teamTestMembers.forEach(member => {
+                    const name = findVal(member, ['Họ và Tên', 'Họ Và Tên', 'Họ và tên', 'Tên', 'Name', 'Họ tên']);
+                    if (name) {
+                        html += `<li>${name}</li>`;
+                    }
+                });
+                html += '</ul>';
+
+                resultDiv.innerHTML = html;
+
+            } catch (error) {
+                console.error('Lỗi:', error);
+                document.getElementById('result').innerHTML = 
+                    `<div class="error">Lỗi khi tải dữ liệu: ${error.message}</div>`;
+            }
+        }
+
+        // Tự động load khi trang được mở
+        loadTeamTest();
+    </script>
+</body>
+</html>

@@ -492,6 +492,44 @@
             return { start: monday, end: sunday };
         }
 
+        // Tuần đầu tiên bắt đầu từ thứ 2, 29/12/2025
+        const FIRST_WEEK_START = new Date(2025, 11, 29); // 29/12/2025 (thứ 2)
+        
+        // Cache để lưu danh sách tuần đã tính toán
+        let weekRangesCache = null;
+
+        // Tự động tạo danh sách các tuần từ tuần đầu tiên đến tuần hiện tại + 4 tuần
+        function generateWeekRanges() {
+            if (weekRangesCache) return weekRangesCache;
+
+            const now = new Date();
+            const currentWeekRange = getWeekRange(now);
+            const currentWeekStart = currentWeekRange.start;
+            
+            // Tính đến tuần hiện tại + 4 tuần trong tương lai
+            const endDate = new Date(currentWeekStart);
+            endDate.setDate(endDate.getDate() + (4 * 7)); // +4 tuần
+
+            const weeks = [];
+            let weekStart = new Date(FIRST_WEEK_START);
+            let weekNum = 1;
+
+            while (weekStart <= endDate) {
+                const weekRange = getWeekRange(weekStart);
+                weeks.push({
+                    id: `w${weekNum}`,
+                    date: new Date(weekStart),
+                    range: weekRange
+                });
+                weekNum++;
+                // Chuyển sang tuần tiếp theo (thêm 7 ngày)
+                weekStart.setDate(weekStart.getDate() + 7);
+            }
+
+            weekRangesCache = weeks;
+            return weeks;
+        }
+
         // Hàm tính tuần hiện tại
         function getCurrentWeek() {
             const now = new Date();
@@ -501,18 +539,10 @@
             const currentWeekRange = getWeekRange(now);
             const currentWeekStart = currentWeekRange.start;
 
-            // So sánh với các tuần đã định nghĩa (tính từ thứ 2)
-            const weekRanges = [
-                { id: 'w1', date: new Date(2025, 11, 29) },
-                { id: 'w2', date: new Date(2026, 0, 5) },
-                { id: 'w3', date: new Date(2026, 0, 12) },
-                { id: 'w4', date: new Date(2026, 0, 19) },
-                { id: 'w5', date: new Date(2026, 0, 26) }
-            ];
-
-            for (let week of weekRanges) {
-                const weekRange = getWeekRange(week.date);
-                if (currentWeekStart.getTime() === weekRange.start.getTime()) {
+            // So sánh với các tuần đã định nghĩa
+            const weeks = generateWeekRanges();
+            for (let week of weeks) {
+                if (currentWeekStart.getTime() === week.range.start.getTime()) {
                     return week.id;
                 }
             }
@@ -541,22 +571,14 @@
 
             // MẶC ĐỊNH: Luôn hiển thị tuần hiện tại (auto)
             const currentWeek = getCurrentWeek();
-            const weekRanges = {
-                'w1': { date: new Date(2025, 11, 29) },
-                'w2': { date: new Date(2026, 0, 5) },
-                'w3': { date: new Date(2026, 0, 12) },
-                'w4': { date: new Date(2026, 0, 19) },
-                'w5': { date: new Date(2026, 0, 26) }
-            };
+            const weeks = generateWeekRanges();
+            const week = weeks.find(w => w.id === currentWeek);
 
-            if (weekRanges[currentWeek]) {
-                const weekDate = weekRanges[currentWeek].date;
-                const weekRange = getWeekRange(weekDate);
-                
-                const startDay = weekRange.start.getDate();
-                const startMonth = weekRange.start.getMonth() + 1;
-                const endDay = weekRange.end.getDate();
-                const endMonth = weekRange.end.getMonth() + 1;
+            if (week) {
+                const startDay = week.range.start.getDate();
+                const startMonth = week.range.start.getMonth() + 1;
+                const endDay = week.range.end.getDate();
+                const endMonth = week.range.end.getMonth() + 1;
 
                 return `Tuần ${currentWeek.replace('w', '')} (${startDay}/${startMonth} - ${endDay}/${endMonth})`;
             }

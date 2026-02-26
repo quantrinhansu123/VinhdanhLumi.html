@@ -418,24 +418,53 @@
             return parseInt(String(moneyStr || 0).replace(/\./g, '').replace(/,/g, '').replace(/\D/g, '')) || 0;
         }
 
+        // Tuần đầu tiên bắt đầu từ thứ 2, 29/12/2025
+        const FIRST_WEEK_START = new Date(2025, 11, 29); // 29/12/2025 (thứ 2)
+        
+        // Cache để lưu danh sách tuần đã tính toán
+        let weekRangesCache = null;
+
+        // Tự động tạo danh sách các tuần từ tuần đầu tiên đến tuần hiện tại + 4 tuần
+        function generateWeekRanges() {
+            if (weekRangesCache) return weekRangesCache;
+
+            const now = new Date();
+            const currentWeekRange = getWeekRange(now);
+            const currentWeekStart = currentWeekRange.start;
+            
+            // Tính đến tuần hiện tại + 4 tuần trong tương lai
+            const endDate = new Date(currentWeekStart);
+            endDate.setDate(endDate.getDate() + (4 * 7)); // +4 tuần
+
+            const weeks = [];
+            let weekStart = new Date(FIRST_WEEK_START);
+            let weekNum = 1;
+
+            while (weekStart <= endDate) {
+                const weekRange = getWeekRange(weekStart);
+                weeks.push({
+                    id: `w${weekNum}`,
+                    date: new Date(weekStart),
+                    range: weekRange
+                });
+                weekNum++;
+                // Chuyển sang tuần tiếp theo (thêm 7 ngày)
+                weekStart.setDate(weekStart.getDate() + 7);
+            }
+
+            weekRangesCache = weeks;
+            return weeks;
+        }
+
         function getCurrentWeek() {
             const now = new Date();
             now.setHours(0, 0, 0, 0);
-            const day = now.getDay();
-            const diff = day === 0 ? -6 : 1 - day;
-            const monday = new Date(now);
-            monday.setDate(now.getDate() + diff);
-            monday.setHours(0, 0, 0, 0);
-            const weekRanges = [
-                { id: 'w1', date: new Date(2025, 11, 29) },
-                { id: 'w2', date: new Date(2026, 0, 5) },
-                { id: 'w3', date: new Date(2026, 0, 12) },
-                { id: 'w4', date: new Date(2026, 0, 19) },
-                { id: 'w5', date: new Date(2026, 0, 26) }
-            ];
-            for (let week of weekRanges) {
-                const weekRange = getWeekRange(week.date);
-                if (monday.getTime() === weekRange.start.getTime()) {
+            const currentWeekRange = getWeekRange(now);
+            const currentWeekStart = currentWeekRange.start;
+            
+            const weeks = generateWeekRanges();
+            for (let week of weeks) {
+                if (currentWeekStart.getTime() === week.range.start.getTime()) {
                     return week.id;
                 }
             }
@@ -458,15 +487,19 @@
         function getDateRange(type, value) {
             let start, end;
             if (type === 'week') {
-                let weekStartDate;
-                if (value === 'w1') { weekStartDate = new Date(2025, 11, 29); }
-                else if (value === 'w2') { weekStartDate = new Date(2026, 0, 5); }
-                else if (value === 'w3') { weekStartDate = new Date(2026, 0, 12); }
-                else if (value === 'w4') { weekStartDate = new Date(2026, 0, 19); }
-                else { weekStartDate = new Date(2026, 0, 26); }
-                const weekRange = getWeekRange(weekStartDate);
-                start = weekRange.start;
-                end = weekRange.end;
+                const weeks = generateWeekRanges();
+                const week = weeks.find(w => w.id === value);
+                if (week) {
+                    start = new Date(week.range.start);
+                    end = new Date(week.range.end);
+                } else {
+                    // Fallback về tuần đầu tiên
+                    const firstWeek = getWeekRange(FIRST_WEEK_START);
+                    start = firstWeek.start;
+                    end = firstWeek.end;
+                }
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
             } else {
                 let filterSettings = null;
                 try {
@@ -485,16 +518,18 @@
                 // Nếu là tháng hiện tại, CHỈ tính tuần hiện tại (không tính từ đầu tháng)
                 if (m === currentMonth && y === currentYear) {
                     const currentWeek = getCurrentWeek();
-                    let weekStartDate;
-                    if (currentWeek === 'w1') { weekStartDate = new Date(2025, 11, 29); }
-                    else if (currentWeek === 'w2') { weekStartDate = new Date(2026, 0, 5); }
-                    else if (currentWeek === 'w3') { weekStartDate = new Date(2026, 0, 12); }
-                    else if (currentWeek === 'w4') { weekStartDate = new Date(2026, 0, 19); }
-                    else { weekStartDate = new Date(2026, 0, 26); }
+                    const weeks = generateWeekRanges();
+                    const week = weeks.find(w => w.id === currentWeek);
                     
-                    const weekRange = getWeekRange(weekStartDate);
-                    start = weekRange.start; // Bắt đầu từ thứ 2 của tuần hiện tại
-                    end = weekRange.end; // Kết thúc vào chủ nhật của tuần hiện tại
+                    if (week) {
+                        start = new Date(week.range.start); // Bắt đầu từ thứ 2 của tuần hiện tại
+                        end = new Date(week.range.end); // Kết thúc vào chủ nhật của tuần hiện tại
+                    } else {
+                        // Fallback
+                        const firstWeek = getWeekRange(FIRST_WEEK_START);
+                        start = firstWeek.start;
+                        end = firstWeek.end;
+                    }
                     console.log(`[BXH TOÀN TEAM] Tháng hiện tại - CHỈ tính tuần hiện tại: ${start.toLocaleDateString('vi-VN')} đến ${end.toLocaleDateString('vi-VN')}`);
                 } else {
                     // Nếu là tháng đã qua, tính hết tháng
@@ -923,7 +958,7 @@
                 console.warn(`[BXH TOÀN TEAM] ⚠️ Có ${ordersWithMkt} đơn hàng có MKT nhưng mktMap rỗng!`);
             }
 
-            const EXCLUDED = ['Mai Thị Lý', 'Phạm Hải Yến', 'Trần Thị Nhung', 'Lê Ngọc Đài Trang', 'Đinh Thị Hoài Thư', 'Đỗ Thị Thu Hằng', 'Đinh Văn Khải', 'Lê Trung Hiếu', 'page-MCN'];
+            const EXCLUDED = ['Mai Thị Lý', 'Phạm Hải Yến', 'Trần Thị Nhung', 'Lê Ngọc Đài Trang', 'Đinh Thị Hoài Thư', 'Đỗ Thị Thu Hằng', 'Đinh Văn Khải', 'Lê Trung Hiếu', 'page-MCN', 'Phan Thị Chiến', 'Dương Thị Hạnh', 'Nguyễn Văn Hoàng'];
             const aggressiveFilter = (i) => {
                 const n = i.name.toLowerCase();
                 return !EXCLUDED.includes(i.name) && !n.includes('lumi') && !n.includes('page') && !n.includes('mcn');
@@ -1147,25 +1182,18 @@
                 
                 if (type === 'week') {
                     // Tính toán khoảng thời gian thực tế từ filter
-                    let weekStartDate;
-                    if (value === 'w1') { weekStartDate = new Date(2025, 11, 29); }
-                    else if (value === 'w2') { weekStartDate = new Date(2026, 0, 5); }
-                    else if (value === 'w3') { weekStartDate = new Date(2026, 0, 12); }
-                    else if (value === 'w4') { weekStartDate = new Date(2026, 0, 19); }
-                    else { weekStartDate = new Date(2026, 0, 26); }
+                    const weeks = generateWeekRanges();
+                    const week = weeks.find(w => w.id === value);
                     
-                    const day = weekStartDate.getDay();
-                    const diff = day === 0 ? -6 : 1 - day;
-                    const monday = new Date(weekStartDate);
-                    monday.setDate(weekStartDate.getDate() + diff);
-                    monday.setHours(0, 0, 0, 0);
-                    
-                    const sunday = new Date(monday);
-                    sunday.setDate(monday.getDate() + 6);
-                    sunday.setHours(23, 59, 59, 999);
-                    
-                    start = monday;
-                    end = sunday;
+                    if (week) {
+                        start = new Date(week.range.start);
+                        end = new Date(week.range.end);
+                    } else {
+                        // Fallback
+                        const firstWeek = getWeekRange(FIRST_WEEK_START);
+                        start = firstWeek.start;
+                        end = firstWeek.end;
+                    }
                     
                     const weekNum = value.replace('w', '');
                     const startStr = `${start.getDate()}/${start.getMonth() + 1}/${start.getFullYear()}`;

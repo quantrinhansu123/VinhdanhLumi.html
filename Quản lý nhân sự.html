@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý nhân sự - LUMI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .toolbar {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .stat-item .label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-item .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: calc(100vh - 400px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        tbody tr.editing {
+            background: #fff3cd;
+        }
+
+        .avatar-cell {
+            width: 60px;
+        }
+
+        .avatar-cell img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-icon {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #218838;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .btn-upload {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-upload:hover {
+            background: #138496;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading i {
+            font-size: 48px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 15px;
+            margin: 15px 30px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fa-solid fa-users"></i> Quản lý nhân sự</h1>
+            <div class="subtitle">Quản lý và cập nhật thông tin nhân sự</div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Tìm kiếm nhân sự...">
+                <i class="fa-solid fa-search"></i>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="label">Tổng số</div>
+                    <div class="value" id="total-count">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Đang chỉnh sửa</div>
+                    <div class="value" id="editing-count">0</div>
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="loadEmployees()">
+                <i class="fa-solid fa-sync"></i> Tải lại
+            </button>
+            <button class="btn btn-upload" onclick="uploadToSupabase()">
+                <i class="fa-solid fa-cloud-upload"></i> Upload Supabase
+            </button>
+        </div>
+
+        <div class="table-container">
+            <div id="loading" class="loading">
+                <i class="fa-solid fa-spinner"></i>
+                <p>Đang tải dữ liệu...</p>
+            </div>
+            <table id="employee-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Ảnh</th>
+                        <th>Họ và Tên</th>
+                        <th>Email</th>
+                        <th>Team</th>
+                        <th>Vị trí</th>
+                        <th>Chi nhánh</th>
+                        <th>Ca</th>
+                        <th>Link ảnh</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="employee-tbody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const HR_URL = 'https://lumidataapi.vercel.app/employees';
+        let employees = [];
+        let originalEmployees = []; // Lưu dữ liệu gốc để so sánh
+        let filteredEmployees = [];
+        let editingRows = new Set();
+        let supabaseClient = null;
+
+        // Load cấu hình từ localStorage hoặc dùng mặc định
+        function loadConfig() {
+            // Thông tin Supabase mặc định
+            const DEFAULT_URL = 'https://gsjhsmxyxjyiqovauyrp.supabase.co';
+            const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzamhzbXh5eGp5aXFvdmF1eXJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDg3NDAsImV4cCI6MjA4MzM4NDc0MH0.kUZgyFH437NWYb0HF4tWkViyB-OzodjBV8979mx5kiI';
+            
+            const url = localStorage.getItem('supabase_url') || DEFAULT_URL;
+            const key = localStorage.getItem('supabase_key') || DEFAULT_KEY;
+            
+            console.log('[CONFIG] Loaded config:', { url, key, table: 'users' });
+            
+            // Tự động khởi tạo Supabase với thông tin mặc định
+            if (url && key) {
+                initSupabase(url, key);
+            }
+        }
+
+        // Khởi tạo Supabase client
+        function initSupabase(url, key) {
+            try {
+                supabaseClient = window.supabase.createClient(url, key);
+                console.log('Supabase client initialized');
+            } catch (e) {
+                console.error('Error initializing Supabase:', e);
+                showMessage('Lỗi khởi tạo Supabase client!', 'error');
+            }
+        }
+
+        // Hiển thị thông báo
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type} show`;
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+
+        // Tải danh sách nhân sự
+        async function loadEmployees() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('employee-table').style.display = 'none';
+            
+            try {
+                const response = await fetch(HR_URL);
+                if (!response.ok) throw new Error('Failed to fetch employees');
+                
+                const data = await response.json();
+                employees = data.employeeData || [];
+                // Lưu bản sao sâu của dữ liệu gốc để so sánh
+                originalEmployees = JSON.parse(JSON.stringify(employees));
+                filteredEmployees = [...employees];
+                
+                renderTable();
+                updateStats();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('employee-table').style.display = 'table';
+                
+                showMessage(`Đã tải ${employees.length} nhân sự!`, 'success');
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                showMessage('Lỗi khi tải dữ liệu nhân sự!', 'error');
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Get default avatar (SVG inline)
+        function getDefaultAvatar() {
+            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+                <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="50" height="50" fill="#e0e0e0"/>
+                    <circle cx="25" cy="20" r="8" fill="#999"/>
+                    <path d="M 10 40 Q 10 30 25 30 Q 40 30 40 40" fill="#999"/>
+                </svg>
+            `);
+        }
+
+        // Extract Google Drive file ID
+        function extractGoogleDriveFileId(link) {
+            if (!link) return null;
+            const str = link.toString().trim();
+            let m = str.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (m) return m[1];
+            m = str.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (m) return m[1];
+            m = str.match(/open[?&]id=([a-zA-Z0-9_-]+)/);
+            if (m) return m[1];
+            m = str.match(/thumbnail[?&]id=([a-zA-Z0-9_-]+)/);
+            if (m) return m[1];
+            return null;
+        }
+
+        // Convert Google Drive link to thumbnail
+        function convertToThumbnail(link) {
+            if (!link) return link;
+            const fileId = extractGoogleDriveFileId(link);
+            if (fileId) {
+                return `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
+            }
+            return link;
+        }
+
+        // Render bảng
+        function renderTable() {
+            const tbody = document.getElementById('employee-tbody');
+            tbody.innerHTML = '';
+            
+            filteredEmployees.forEach((emp, index) => {
+                const row = document.createElement('tr');
+                const isEditing = editingRows.has(emp.id);
+                
+                if (isEditing) row.classList.add('editing');
+                row.setAttribute('data-employee-id', emp.id);
+                
+                const name = escapeHtml(emp['Họ Và Tên'] || '');
+                const email = escapeHtml(emp.Email || '');
+                const team = escapeHtml(emp.Team || '');
+                const position = escapeHtml(emp['Vị trí'] || '');
+                const branch = escapeHtml(emp['chi nhánh'] || '');
+                const shift = escapeHtml(emp.ca || '');
+                const avatar = escapeHtml(emp.link_anh || '');
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td class="avatar-cell">
+                        <img src="${avatar || getDefaultAvatar()}" 
+                             onerror="this.onerror=null; this.src=this.getAttribute('data-fallback') || getDefaultAvatar()"
+                             data-fallback="${getDefaultAvatar()}"
+                             style="object-fit: cover; background: #f0f0f0;">
+                    </td>
+                    <td>${isEditing ? 
+                        `<input type="text" class="input-field" value="${name}" data-field="Họ Và Tên">` : 
+                        name}</td>
+                    <td>${isEditing ? 
+                        `<input type="email" class="input-field" value="${email}" data-field="Email">` : 
+                        email}</td>
+                    <td>${isEditing ? 
+                        `<input type="text" class="input-field" value="${team}" data-field="Team">` : 
+                        team}</td>
+                    <td>${isEditing ? 
+                        `<input type="text" class="input-field" value="${position}" data-field="Vị trí">` : 
+                        position}</td>
+                    <td>${isEditing ? 
+                        `<input type="text" class="input-field" value="${branch}" data-field="chi nhánh">` : 
+                        branch}</td>
+                    <td>${isEditing ? 
+                        `<input type="text" class="input-field" value="${shift}" data-field="ca">` : 
+                        shift}</td>
+                    <td>${isEditing ? 
+                        `<input type="text" class="input-field link-image-input" value="${avatar}" data-field="link_anh" style="width: 200px;" 
+                                onblur="convertImageLink(this)" placeholder="Nhập link ảnh...">` : 
+                        (avatar ? `<a href="${avatar}" target="_blank" style="color: #667eea;">Xem</a>` : '')}</td>
+                    <td>
+                        <div class="action-buttons">
+                            ${isEditing ? 
+                                `<button class="btn-icon btn-save" data-action="save" data-id="${emp.id}">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button class="btn-icon btn-cancel" data-action="cancel" data-id="${emp.id}">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>` :
+                                `<button class="btn-icon btn-edit" data-action="edit" data-id="${emp.id}">
+                                    <i class="fa-solid fa-edit"></i>
+                                </button>`
+                            }
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Gắn event listeners
+            tbody.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    const id = this.getAttribute('data-id');
+                    if (action === 'edit') editEmployee(id);
+                    else if (action === 'save') saveEmployee(id);
+                    else if (action === 'cancel') cancelEdit(id);
+                });
+            });
+        }
+
+        // Convert image link to thumbnail when user leaves the input
+        function convertImageLink(input) {
+            const originalValue = input.value.trim();
+            if (!originalValue) return;
+            
+            const thumbnailLink = convertToThumbnail(originalValue);
+            if (thumbnailLink !== originalValue) {
+                input.value = thumbnailLink;
+                showMessage('Đã tự động chuyển link ảnh sang thumbnail!', 'success');
+            }
+        }
+
+        // Chỉnh sửa nhân viên
+        function editEmployee(id) {
+            editingRows.add(id);
+            renderTable();
+            updateStats();
+        }
+
+        // Hủy chỉnh sửa
+        function cancelEdit(id) {
+            editingRows.delete(id);
+            renderTable();
+            updateStats();
+        }
+
+        // So sánh nhân viên có thay đổi không
+        function hasEmployeeChanged(employee) {
+            // Tìm nhân viên gốc theo id
+            const originalEmployee = originalEmployees.find(e => e.id === employee.id);
+            
+            if (!originalEmployee) {
+                // Nếu không tìm thấy trong dữ liệu gốc, có thể là nhân viên mới
+                return true;
+            }
+            
+            // CHỈ so sánh link_anh (vì chỉ upload avatar_url)
+            const currentLinkAnh = (employee.link_anh || '').toString().trim();
+            const originalLinkAnh = (originalEmployee.link_anh || '').toString().trim();
+            
+            if (currentLinkAnh !== originalLinkAnh) {
+                console.log(`[CHANGE DETECTED] link_anh changed: "${originalLinkAnh}" -> "${currentLinkAnh}"`);
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // Lưu nhân viên
+        async function saveEmployee(id) {
+            const row = document.querySelector(`tr[data-employee-id="${id}"]`);
+            if (!row) return;
+            
+            const employeeIndex = filteredEmployees.findIndex(e => e.id === id);
+            if (employeeIndex === -1) return;
+            
+            const employee = filteredEmployees[employeeIndex];
+            const inputs = row.querySelectorAll('.input-field');
+            
+            // Lưu dữ liệu trước khi cập nhật để so sánh
+            const employeeBeforeUpdate = JSON.parse(JSON.stringify(employee));
+            
+            inputs.forEach(input => {
+                const field = input.getAttribute('data-field');
+                employee[field] = input.value;
+            });
+            
+            // Cập nhật trong mảng employees gốc
+            const originalIndex = employees.findIndex(e => e.id === id);
+            if (originalIndex !== -1) {
+                Object.assign(employees[originalIndex], employee);
+            }
+            
+            editingRows.delete(id);
+            renderTable();
+            updateStats();
+            showMessage('Đã cập nhật thông tin nhân viên!', 'success');
+            
+            // Chỉ upload nếu có thay đổi
+            if (supabaseClient) {
+                // So sánh với dữ liệu gốc
+                if (hasEmployeeChanged(employee)) {
+                    console.log(`[UPLOAD] Phát hiện thay đổi ở nhân viên ${employee['Họ Và Tên'] || 'N/A'} (${employee.Email || 'N/A'})`);
+                    await uploadSingleEmployeeToSupabase(employee);
+                } else {
+                    console.log(`[UPLOAD] Không có thay đổi ở nhân viên ${employee['Họ Và Tên'] || 'N/A'} (${employee.Email || 'N/A'}), bỏ qua upload`);
+                    showMessage('Không có thay đổi, không cần upload!', 'success');
+                }
+            }
+        }
+        
+        // Upload một nhân viên lên Supabase
+        async function uploadSingleEmployeeToSupabase(employee) {
+            if (!supabaseClient) {
+                return;
+            }
+            
+            // Kiểm tra email
+            if (!employee.Email || !employee.Email.trim()) {
+                showMessage('Không thể upload: Nhân viên không có Email!', 'error');
+                return;
+            }
+            
+            // Luôn dùng 'users' làm tên bảng
+            const tableName = 'users';
+            const emailValue = employee.Email.trim();
+            
+            try {
+                showMessage(`Đang upload ${employee['Họ Và Tên'] || 'N/A'}...`, 'success');
+                
+                // Kiểm tra bảng có tồn tại không và lấy cấu trúc
+                const tableInfo = await checkTableExists(tableName);
+                
+                if (!tableInfo || !tableInfo.exists) {
+                    showMessage(`Bảng "${tableName}" không tồn tại. Vui lòng tạo bảng trước!`, 'error');
+                    return;
+                }
+                
+                // Tìm trong cột email xem đã tồn tại chưa
+                console.log(`[UPLOAD SINGLE] Đang tìm email ${emailValue} trong bảng "${tableName}"`);
+                const { data: existing, error: checkError } = await supabaseClient
+                    .from(tableName)
+                    .select('email')
+                    .eq('email', emailValue)
+                    .limit(1);
+                
+                if (checkError && checkError.code !== 'PGRST116') {
+                    if (checkError.code === 'PGRST205' || checkError.message.includes('Could not find the table')) {
+                        showMessage(`Bảng "${tableName}" không tồn tại. Vui lòng tạo bảng trước!`, 'error');
+                        return;
+                    }
+                    throw checkError;
+                }
+                
+                // Chuẩn bị dữ liệu để upload
+                const dataToUpload = mapEmployeeToSupabase(employee, tableInfo.columns);
+                
+                // Đảm bảo email luôn có
+                if (!dataToUpload.email) {
+                    dataToUpload.email = emailValue;
+                }
+                
+                // Lọc chỉ giữ lại các cột có trong bảng (tránh lỗi cột không tồn tại)
+                const validColumns = tableInfo.columns || [];
+                const validColumnsLower = validColumns.map(c => c.toLowerCase());
+                const filteredData = {};
+                
+                // Đảm bảo email luôn có trong filteredData
+                if (dataToUpload.email) {
+                    const emailCol = validColumns.length > 0 
+                        ? validColumns.find(c => c.toLowerCase() === 'email')
+                        : 'email'; // Fallback nếu không có columns
+                    if (emailCol) {
+                        filteredData[emailCol] = dataToUpload.email;
+                    } else {
+                        filteredData.email = dataToUpload.email; // Fallback
+                    }
+                }
+                
+                // Xử lý avatar_url đặc biệt - luôn thêm nếu có trong dataToUpload
+                if (dataToUpload.avatar_url) {
+                    if (validColumns.length > 0) {
+                        const avatarCol = validColumns.find(c => c.toLowerCase() === 'avatar_url' || c.toLowerCase() === 'avatar url');
+                        if (avatarCol) {
+                            filteredData[avatarCol] = dataToUpload.avatar_url;
+                            console.log(`[UPLOAD SINGLE] ✅ Đã thêm avatar_url vào filteredData: ${dataToUpload.avatar_url}`);
+                        } else {
+                            console.warn(`[UPLOAD SINGLE] ⚠️ Cột avatar_url không tồn tại trong bảng! Valid columns:`, validColumns);
+                            // Vẫn thêm vào nếu bảng rỗng (fallback)
+                            if (validColumns.length === 0) {
+                                filteredData.avatar_url = dataToUpload.avatar_url;
+                                console.log(`[UPLOAD SINGLE] ✅ Thêm avatar_url (fallback vì bảng rỗng): ${dataToUpload.avatar_url}`);
+                            }
+                        }
+                    } else {
+                        // Bảng rỗng, dùng fallback
+                        filteredData.avatar_url = dataToUpload.avatar_url;
+                        console.log(`[UPLOAD SINGLE] ✅ Thêm avatar_url (fallback vì không có columns): ${dataToUpload.avatar_url}`);
+                    }
+                }
+                
+                // Xử lý các trường khác (nếu có)
+                for (const [key, value] of Object.entries(dataToUpload)) {
+                    // Bỏ qua email và avatar_url vì đã xử lý ở trên
+                    if (key.toLowerCase() === 'email' || key.toLowerCase() === 'avatar_url') continue;
+                    
+                    if (validColumns.length > 0 && validColumnsLower.includes(key.toLowerCase())) {
+                        // Tìm tên cột chính xác (giữ nguyên case)
+                        const exactColumnName = validColumns.find(c => c.toLowerCase() === key.toLowerCase());
+                        if (exactColumnName) {
+                            filteredData[exactColumnName] = value;
+                        }
+                    } else if (validColumns.length === 0) {
+                        // Bảng rỗng, thêm trực tiếp
+                        filteredData[key] = value;
+                    } else {
+                        console.log(`[UPLOAD SINGLE] Bỏ qua cột "${key}" vì không tồn tại trong bảng`);
+                    }
+                }
+                
+                console.log(`[UPLOAD SINGLE] Data to upload (original):`, dataToUpload);
+                console.log(`[UPLOAD SINGLE] Data to upload (filtered):`, filteredData);
+                console.log(`[UPLOAD SINGLE] Valid columns:`, validColumns);
+                console.log(`[UPLOAD SINGLE] Final data keys:`, Object.keys(filteredData));
+                console.log(`[UPLOAD SINGLE] Final data có avatar_url:`, 'avatar_url' in filteredData || Object.keys(filteredData).some(k => k.toLowerCase() === 'avatar_url'));
+                
+                // Luôn dùng filteredData (chỉ chứa các cột hợp lệ)
+                const finalData = filteredData;
+                
+                if (existing && existing.length > 0) {
+                    // Update nếu đã tồn tại
+                    console.log(`[UPLOAD SINGLE] Updating existing record for ${emailValue}`);
+                    const { error: updateError } = await supabaseClient
+                        .from(tableName)
+                        .update(finalData)
+                        .eq('email', emailValue);
+                    
+                    if (updateError) {
+                        console.error(`[UPLOAD SINGLE] Update error:`, updateError);
+                        throw updateError;
+                    }
+                    
+                    // Verify: Query lại từ Supabase để xác nhận đã lưu thành công
+                    const { data: verifyData, error: verifyError } = await supabaseClient
+                        .from(tableName)
+                        .select('email, avatar_url')
+                        .eq('email', emailValue)
+                        .limit(1);
+                    
+                    if (verifyError) {
+                        console.error(`[UPLOAD SINGLE] Verify error:`, verifyError);
+                    } else {
+                        console.log(`[UPLOAD SINGLE] Verified data from Supabase:`, verifyData);
+                        if (verifyData && verifyData.length > 0) {
+                            console.log(`[UPLOAD SINGLE] ✅ Avatar URL trong Supabase:`, verifyData[0].avatar_url);
+                        }
+                    }
+                    
+                    showMessage(`Đã cập nhật ${employee['Họ Và Tên'] || 'N/A'} lên Supabase!`, 'success');
+                } else {
+                    // Insert nếu chưa tồn tại
+                    console.log(`[UPLOAD SINGLE] Inserting new record for ${emailValue}`);
+                    const { error: insertError } = await supabaseClient
+                        .from(tableName)
+                        .insert(finalData);
+                    
+                    if (insertError) {
+                        console.error(`[UPLOAD SINGLE] Insert error:`, insertError);
+                        throw insertError;
+                    }
+                    
+                    // Verify: Query lại từ Supabase để xác nhận đã lưu thành công
+                    const { data: verifyData, error: verifyError } = await supabaseClient
+                        .from(tableName)
+                        .select('email, avatar_url')
+                        .eq('email', emailValue)
+                        .limit(1);
+                    
+                    if (verifyError) {
+                        console.error(`[UPLOAD SINGLE] Verify error:`, verifyError);
+                    } else {
+                        console.log(`[UPLOAD SINGLE] Verified data from Supabase:`, verifyData);
+                        if (verifyData && verifyData.length > 0) {
+                            console.log(`[UPLOAD SINGLE] ✅ Avatar URL trong Supabase:`, verifyData[0].avatar_url);
+                        }
+                    }
+                    
+                    showMessage(`Đã thêm ${employee['Họ Và Tên'] || 'N/A'} lên Supabase!`, 'success');
+                }
+                
+                // Cập nhật dữ liệu gốc sau khi upload thành công
+                const originalIndex = originalEmployees.findIndex(e => e.id === employee.id);
+                if (originalIndex !== -1) {
+                    originalEmployees[originalIndex] = JSON.parse(JSON.stringify(employee));
+                } else {
+                    // Nếu là nhân viên mới, thêm vào originalEmployees
+                    originalEmployees.push(JSON.parse(JSON.stringify(employee)));
+                }
+                console.log(`[UPLOAD SINGLE] Đã cập nhật dữ liệu gốc cho ${employee['Họ Và Tên'] || 'N/A'}`);
+            } catch (error) {
+                console.error(`[UPLOAD SINGLE] Error uploading ${employee['Họ Và Tên'] || 'N/A'}:`, error);
+                showMessage(`Lỗi khi upload ${employee['Họ Và Tên'] || 'N/A'}: ${error.message || 'Lỗi không xác định'}`, 'error');
+            }
+        }
+
+        // Tìm kiếm
+        document.getElementById('search-input').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            filteredEmployees = employees.filter(emp => {
+                const name = (emp['Họ Và Tên'] || '').toLowerCase();
+                const email = (emp.Email || '').toLowerCase();
+                const team = (emp.Team || '').toLowerCase();
+                return name.includes(searchTerm) || email.includes(searchTerm) || team.includes(searchTerm);
+            });
+            renderTable();
+        });
+
+        // Cập nhật thống kê
+        function updateStats() {
+            document.getElementById('total-count').textContent = filteredEmployees.length;
+            document.getElementById('editing-count').textContent = editingRows.size;
+        }
+
+        // Kiểm tra bảng có tồn tại không và lấy cấu trúc
+        async function checkTableExists(tableName) {
+            try {
+                // Thử select với limit 0 để lấy metadata
+                const { data, error, count } = await supabaseClient
+                    .from(tableName)
+                    .select('*', { count: 'exact', head: true });
+                
+                // Nếu lỗi là "table not found" thì bảng không tồn tại
+                if (error && (error.code === 'PGRST205' || error.message.includes('Could not find the table'))) {
+                    return { exists: false, columns: null };
+                }
+                
+                // Nếu có lỗi khác, vẫn coi như bảng tồn tại nhưng không lấy được columns
+                if (error) {
+                    console.warn('[TABLE] Lỗi khi kiểm tra bảng:', error);
+                    // Vẫn trả về exists: true vì có thể bảng tồn tại nhưng có vấn đề khác
+                    return { exists: true, columns: null };
+                }
+                
+                // Nếu có data, lấy danh sách columns
+                let columns = null;
+                if (data && data.length > 0) {
+                    columns = Object.keys(data[0]);
+                    console.log('[TABLE] Columns trong bảng:', columns);
+                } else {
+                    // Nếu bảng rỗng, thử insert một record test rồi xóa (hoặc dùng RPC)
+                    // Hoặc trả về null và để code tự map
+                    console.log('[TABLE] Bảng rỗng, không thể detect columns. Sẽ dùng mapping mặc định.');
+                }
+                
+                return { exists: true, columns };
+            } catch (e) {
+                console.error('[TABLE] Exception khi kiểm tra bảng:', e);
+                // Nếu có exception, vẫn coi như bảng tồn tại
+                return { exists: true, columns: null };
+            }
+        }
+
+        // Map dữ liệu từ API sang format Supabase - CHỈ map email và avatar_url
+        function mapEmployeeToSupabase(employee, availableColumns = null) {
+            const mapped = {};
+            
+            // Email là bắt buộc - chỉ dùng 'email' (lowercase)
+            if (employee.Email && employee.Email.trim()) {
+                mapped.email = employee.Email.trim();
+            }
+            
+            // CHỈ map link_anh vào avatar_url
+            if (employee.link_anh) {
+                if (availableColumns && Array.isArray(availableColumns)) {
+                    const columnsLower = availableColumns.map(c => c.toLowerCase());
+                    // Tìm cột avatar_url
+                    if (columnsLower.includes('avatar_url') || columnsLower.includes('avatar url')) {
+                        const avatarCol = availableColumns.find(c => c.toLowerCase() === 'avatar_url' || c.toLowerCase() === 'avatar url');
+                        if (avatarCol) {
+                            mapped[avatarCol] = employee.link_anh;
+                        }
+                    }
+                } else {
+                    // Fallback: dùng tên cột mặc định
+                    mapped.avatar_url = employee.link_anh;
+                }
+            }
+            
+            console.log('[MAP] Mapped data (chỉ email và avatar_url):', mapped);
+            return mapped;
+        }
+
+        // Upload lên Supabase
+        async function uploadToSupabase() {
+            if (!supabaseClient) {
+                showMessage('Vui lòng cấu hình Supabase trước!', 'error');
+                return;
+            }
+            
+            // Luôn dùng 'users' làm tên bảng
+            const tableName = 'users';
+            
+            console.log('[UPLOAD] Table name được sử dụng:', tableName);
+            console.log('[UPLOAD] Input value:', tableNameInput ? tableNameInput.value : 'N/A');
+            
+            if (employees.length === 0) {
+                showMessage('Không có dữ liệu để upload!', 'error');
+                return;
+            }
+            
+            // Kiểm tra bảng có tồn tại không và lấy cấu trúc
+            showMessage(`Đang kiểm tra bảng "${tableName}"...`, 'success');
+            console.log('[UPLOAD] Đang kiểm tra bảng:', tableName);
+            const tableInfo = await checkTableExists(tableName);
+            console.log('[UPLOAD] Bảng tồn tại:', tableInfo ? tableInfo.exists : 'N/A');
+            console.log('[UPLOAD] Columns:', tableInfo ? tableInfo.columns : 'N/A');
+            
+            // Đảm bảo tableInfo tồn tại
+            if (!tableInfo) {
+                showMessage('Lỗi khi kiểm tra bảng. Vui lòng thử lại.', 'error');
+                return;
+            }
+            
+            if (!tableInfo.exists) {
+                const continueUpload = confirm(
+                    `Bảng "${tableName}" không tồn tại trong Supabase!\n\n` +
+                    `Bạn có muốn tiếp tục upload không?\n` +
+                    `(Nếu bảng chưa tồn tại, upload sẽ thất bại)`
+                );
+                
+                if (!continueUpload) {
+                    showMessage('Đã hủy upload.', 'error');
+                    return;
+                }
+            }
+            
+            if (!confirm(`Bạn có chắc muốn upload ${employees.length} nhân sự lên bảng "${tableName}"?\nSử dụng Email làm key - nếu đã tồn tại sẽ update, chưa có sẽ thêm mới.`)) {
+                return;
+            }
+            
+            showMessage('Đang upload dữ liệu...', 'success');
+            
+            try {
+                let successCount = 0;
+                let errorCount = 0;
+                const errors = [];
+                
+                // Upload từng nhân viên, sử dụng email làm key
+                for (const employee of employees) {
+                    if (!employee.Email || !employee.Email.trim()) {
+                        errorCount++;
+                        errors.push(`${employee['Họ Và Tên'] || 'N/A'}: Không có Email`);
+                        continue;
+                    }
+                    
+                    try {
+                        // Kiểm tra xem email đã tồn tại chưa
+                        // Sử dụng 'email' (lowercase)
+                        console.log(`[UPLOAD] Đang kiểm tra email ${employee.Email} trong bảng "${tableName}"`);
+                        
+                        const { data: existing, error: checkError } = await supabaseClient
+                            .from(tableName)
+                            .select('email')
+                            .eq('email', employee.Email.trim())
+                            .limit(1);
+                        
+                        if (checkError && checkError.code !== 'PGRST116') {
+                            // Nếu lỗi là "table not found", dừng lại
+                            if (checkError.code === 'PGRST205' || checkError.message.includes('Could not find the table')) {
+                                throw new Error(`Bảng "${tableName}" không tồn tại. Vui lòng tạo bảng trong Supabase Dashboard.`);
+                            }
+                            throw checkError;
+                        }
+                        
+                        // Chuẩn bị dữ liệu để upload - map theo cấu trúc bảng
+                        const dataToUpload = mapEmployeeToSupabase(employee, tableInfo ? tableInfo.columns : null);
+                        
+                        // Đảm bảo email luôn có (chỉ dùng lowercase)
+                        if (!dataToUpload.email && employee.Email) {
+                            dataToUpload.email = employee.Email.trim();
+                        }
+                        
+                        console.log(`[UPLOAD] Data to upload for ${employee.Email}:`, dataToUpload);
+                        
+                        // Luôn dùng 'email' (lowercase) làm column name
+                        const emailColumn = 'email';
+                        
+                        if (existing && existing.length > 0) {
+                            // Update nếu đã tồn tại
+                            console.log(`[UPLOAD] Updating existing record for ${employee.Email} using column: ${emailColumn}`);
+                            const { error: updateError } = await supabaseClient
+                                .from(tableName)
+                                .update(dataToUpload)
+                                .eq(emailColumn, employee.Email.trim());
+                            
+                            if (updateError) {
+                                console.error(`[UPLOAD] Update error for ${employee.Email}:`, updateError);
+                                throw updateError;
+                            }
+                        } else {
+                            // Insert nếu chưa tồn tại
+                            console.log(`[UPLOAD] Inserting new record for ${employee.Email}`);
+                            const { error: insertError } = await supabaseClient
+                                .from(tableName)
+                                .insert(dataToUpload);
+                            
+                            if (insertError) {
+                                console.error(`[UPLOAD] Insert error for ${employee.Email}:`, insertError);
+                                throw insertError;
+                            }
+                        }
+                        
+                        successCount++;
+                    } catch (err) {
+                        errorCount++;
+                        errors.push(`${employee['Họ Và Tên'] || 'N/A'} (${employee.Email}): ${err.message}`);
+                        console.error(`Error processing ${employee.Email}:`, err);
+                        
+                        // Nếu lỗi là "table not found", dừng lại ngay
+                        if (err.message && err.message.includes('Could not find the table')) {
+                            showMessage(`Lỗi: Bảng "${tableName}" không tồn tại. Vui lòng tạo bảng trong Supabase Dashboard.`, 'error');
+                            break;
+                        }
+                    }
+                }
+                
+                if (errorCount === 0) {
+                    showMessage(`Đã upload thành công ${successCount} nhân sự lên Supabase!`, 'success');
+                } else if (successCount > 0) {
+                    showMessage(`Đã upload ${successCount} nhân sự. Có ${errorCount} lỗi. Xem console để biết chi tiết.`, 'error');
+                    console.error('Upload errors:', errors);
+                } else {
+                    showMessage(`Upload thất bại. Xem console để biết chi tiết.`, 'error');
+                    console.error('Upload errors:', errors);
+                }
+            } catch (error) {
+                console.error('Error uploading to Supabase:', error);
+                let errorMsg = error.message || 'Lỗi không xác định';
+                if (error.code === 'PGRST205' || errorMsg.includes('Could not find the table')) {
+                    errorMsg = `Bảng "${tableName}" không tồn tại. Vui lòng tạo bảng trong Supabase Dashboard với tên "${tableName}" và đảm bảo có cột Email là unique key.`;
+                }
+                showMessage('Lỗi khi upload lên Supabase: ' + errorMsg, 'error');
+            }
+        }
+
+        // Tạo bảng trong Supabase (sử dụng RPC nếu có)
+        async function createTableInSupabase(tableName) {
+            showMessage('Đang tạo bảng...', 'success');
+            // Note: Tạo bảng thông qua Supabase client yêu cầu quyền admin
+            // Thông thường cần tạo bảng thủ công trong Supabase Dashboard
+            showMessage('Vui lòng tạo bảng thủ công trong Supabase Dashboard. Xem hướng dẫn trong console.', 'error');
+            console.log(`
+HƯỚNG DẪN TẠO BẢNG TRONG SUPABASE:
+
+1. Mở Supabase Dashboard: https://supabase.com/dashboard
+2. Chọn project của bạn
+3. Vào SQL Editor
+4. Chạy SQL sau:
+
+CREATE TABLE IF NOT EXISTS ${tableName} (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    "Họ Và Tên" TEXT,
+    "Email" TEXT UNIQUE NOT NULL,
+    "Team" TEXT,
+    "Vị trí" TEXT,
+    "chi nhánh" TEXT,
+    "ca" TEXT,
+    "link_anh" TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tạo index cho Email để tìm kiếm nhanh
+CREATE INDEX IF NOT EXISTS idx_${tableName}_email ON ${tableName}(Email);
+
+-- Tạo trigger để tự động cập nhật updated_at (chỉ tạo nếu chưa có)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'update_updated_at_column') THEN
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            NEW.updated_at = NOW();
+            RETURN NEW;
+        END;
+        $$ language 'plpgsql';
+    END IF;
+END $$;
+
+DROP TRIGGER IF EXISTS update_${tableName}_updated_at ON ${tableName};
+CREATE TRIGGER update_${tableName}_updated_at BEFORE UPDATE ON ${tableName}
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            `);
+        }
+
+        // Khởi tạo
+        loadConfig();
+        loadEmployees();
+    </script>
+</body>
+
+</html>

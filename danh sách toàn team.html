@@ -356,7 +356,7 @@
         const F3_URL = 'https://n-api-gamma.vercel.app/sheet/F3/data';
         const REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo sale';
         const MKT_REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo MKT';
-        const HR_URL = 'https://lumi-6dff7-default-rtdb.asia-southeast1.firebasedatabase.app/datasheet/Nh%C3%A2ns%E1%BB%B1';
+        const HR_URL = 'https://lumidataapi.vercel.app/employees';
 
         // ========== GLOBAL VARIABLES ==========
         let allOrders = [];
@@ -641,21 +641,6 @@
             });
         }
 
-        function extractGoogleDriveFileId(link) {
-            if (!link) return null;
-            const str = link.toString().trim();
-            let m = str.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if (m) return m[1];
-            m = str.match(/[?&]id=([a-zA-Z0-9_-]+)/); if (m) return m[1];
-            m = str.match(/open[?&]id=([a-zA-Z0-9_-]+)/); if (m) return m[1];
-            return null;
-        }
-
-        function convertGoogleDriveLink(link) {
-            if (!link) return link;
-            const fileId = extractGoogleDriveFileId(link);
-            return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : link;
-        }
-
         function getAvatar(name) {
             if (!name) {
                 let hash = 0;
@@ -671,18 +656,8 @@
             if (hrDataMap) {
                 const hrRecord = hrDataMap.get(nameNormalized);
                 if (hrRecord) {
-                    let imageLink = hrRecord['Link ảnh'] || hrRecord['link ảnh'] || hrRecord['Link_ảnh'] ||
-                        hrRecord['Link anh'] || hrRecord['link anh'] || hrRecord['Link_anh'] ||
-                        hrRecord['Ảnh'] || hrRecord['anh'] || hrRecord['Image'] || hrRecord['image'] ||
-                        hrRecord['Avatar'] || hrRecord['avatar'] || hrRecord['Ảnh đại diện'] ||
-                        hrRecord['Anh dai dien'] || hrRecord['Anh_dai_dien'] ||
-                        hrRecord['LINK ẢNH'] || hrRecord['LINK_ẢNH'];
-                    if (!imageLink) {
-                        imageLink = hrRecord['Link vận đơn'] || hrRecord['link vận đơn'] || hrRecord['Link_vận_đơn'] ||
-                            hrRecord['Link van don'] || hrRecord['link van don'] || hrRecord['Link_van_don'] ||
-                            hrRecord['Link vận đơn cũ'] || hrRecord['link vận đơn cũ'] || hrRecord['Link_vận_đơn_cũ'];
-                    }
-                    if (imageLink && imageLink.trim()) return convertGoogleDriveLink(imageLink.trim());
+                    const imageLink = hrRecord['link_anh'];
+                    if (imageLink && imageLink.trim()) return imageLink.trim();
                 }
             }
             let hash = 0;
@@ -725,7 +700,9 @@
             
             if (!data || data.length === 0) {
                 console.warn(`[BXH TOÀN TEAM] Không có dữ liệu cho ${containerId}`);
-                container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Chưa có dữ liệu</div>';
+                console.warn(`[BXH TOÀN TEAM] data =`, data);
+                console.warn(`[BXH TOÀN TEAM] data.length =`, data ? data.length : 'data is null/undefined');
+                container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;font-size:1.2vw;"><i class="fa-solid fa-info-circle"></i> Chưa có dữ liệu trong khoảng thời gian này</div>';
                 return;
             }
 
@@ -806,7 +783,7 @@
                     fetch(F3_URL).catch((e) => { console.error('[BXH TOÀN TEAM] ❌ Lỗi fetch F3:', e); return null; }),
                     fetch(REPORT_URL).catch((e) => { console.error('[BXH TOÀN TEAM] ❌ Lỗi fetch Report:', e); return null; }),
                     fetch(MKT_REPORT_URL).catch((e) => { console.error('[BXH TOÀN TEAM] ❌ Lỗi fetch MKT Report:', e); return null; }),
-                    fetch(HR_URL + '.json').catch((e) => { console.error('[BXH TOÀN TEAM] ❌ Lỗi fetch HR:', e); return null; })
+                    fetch(HR_URL).catch((e) => { console.error('[BXH TOÀN TEAM] ❌ Lỗi fetch HR:', e); return null; })
                 ]);
 
                 if (resF3 && resF3.ok) {
@@ -850,7 +827,7 @@
                 
                 if (resHr && resHr.ok) {
                     const data = await resHr.json();
-                    hrData = Array.isArray(data) ? data : Object.values(data);
+                    hrData = data.employeeData || [];
                     console.log('[BXH TOÀN TEAM] ✅ Loaded HR data:', hrData.length);
                     // Build HR data map ngay sau khi load
                     if (hrData.length > 0) {
@@ -950,12 +927,21 @@
             
             console.log(`[BXH TOÀN TEAM] 👥 Đơn hàng có Sale: ${ordersWithSale}, Đơn hàng có MKT: ${ordersWithMkt}`);
             console.log(`[BXH TOÀN TEAM] 👥 saleMap keys: ${Object.keys(saleMap).length}, mktMap keys: ${Object.keys(mktMap).length}`);
+            console.log(`[BXH TOÀN TEAM] 👥 saleMap names:`, Object.keys(saleMap).slice(0, 10));
+            console.log(`[BXH TOÀN TEAM] 👥 mktMap names:`, Object.keys(mktMap).slice(0, 10));
             
             if (Object.keys(saleMap).length === 0 && ordersWithSale > 0) {
                 console.warn(`[BXH TOÀN TEAM] ⚠️ Có ${ordersWithSale} đơn hàng có Sale nhưng saleMap rỗng!`);
             }
             if (Object.keys(mktMap).length === 0 && ordersWithMkt > 0) {
                 console.warn(`[BXH TOÀN TEAM] ⚠️ Có ${ordersWithMkt} đơn hàng có MKT nhưng mktMap rỗng!`);
+            }
+            
+            if (Object.keys(saleMap).length === 0 && Object.keys(mktMap).length === 0) {
+                console.warn(`[BXH TOÀN TEAM] ⚠️ KHÔNG CÓ DỮ LIỆU! Có thể do:`);
+                console.warn(`[BXH TOÀN TEAM] ⚠️ 1. Không có đơn hàng trong khoảng thời gian ${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')}`);
+                console.warn(`[BXH TOÀN TEAM] ⚠️ 2. Tất cả đơn hàng đều không có Team Hà Nội`);
+                console.warn(`[BXH TOÀN TEAM] ⚠️ 3. Tất cả đơn hàng đều không có Sale/MKT`);
             }
 
             const EXCLUDED = ['Mai Thị Lý', 'Phạm Hải Yến', 'Trần Thị Nhung', 'Lê Ngọc Đài Trang', 'Đinh Thị Hoài Thư', 'Đỗ Thị Thu Hằng', 'Đinh Văn Khải', 'Lê Trung Hiếu', 'page-MCN', 'Phan Thị Chiến', 'Dương Thị Hạnh', 'Nguyễn Văn Hoàng'];
@@ -966,7 +952,11 @@
 
             let saleList = Object.keys(saleMap).map(name => ({
                 name, rawVal: saleMap[name], value: formatMoney(saleMap[name]), avatar: getAvatar(name)
-            })).sort((a, b) => b.rawVal - a.rawVal).filter(aggressiveFilter);
+            })).sort((a, b) => b.rawVal - a.rawVal);
+            
+            console.log(`[BXH TOÀN TEAM] 📊 Sale list trước khi lọc aggressiveFilter: ${saleList.length} người`);
+            saleList = saleList.filter(aggressiveFilter);
+            console.log(`[BXH TOÀN TEAM] 📊 Sale list sau khi lọc aggressiveFilter: ${saleList.length} người`);
 
             // LỌC SALE THEO CA LÀM VIỆC (NGÀY: 7h-19h, ĐÊM: 19h-7h)
             if (!hrDataMap && hrData && hrData.length > 0) buildHRDataMap();
@@ -983,7 +973,11 @@
 
             let mktList = Object.keys(mktMap).map(name => ({
                 name, rawVal: mktMap[name], value: formatMoney(mktMap[name]), avatar: getAvatar(name)
-            })).sort((a, b) => b.rawVal - a.rawVal).filter(aggressiveFilter);
+            })).sort((a, b) => b.rawVal - a.rawVal);
+            
+            console.log(`[BXH TOÀN TEAM] 📊 MKT list trước khi lọc aggressiveFilter: ${mktList.length} người`);
+            mktList = mktList.filter(aggressiveFilter);
+            console.log(`[BXH TOÀN TEAM] 📊 MKT list sau khi lọc aggressiveFilter: ${mktList.length} người`);
 
             if (mktList.length > 0) {
                 const max = mktList[0].rawVal;
@@ -1046,6 +1040,15 @@
             }
 
             console.log(`[BXH TOÀN TEAM] 📊 Tính toán xong: Sale=${saleList.length}, MKT=${mktList.length}`);
+            
+            if (saleList.length === 0 && mktList.length === 0) {
+                console.warn(`[BXH TOÀN TEAM] ⚠️ CẢNH BÁO: Không có dữ liệu sau khi tính toán!`);
+                console.warn(`[BXH TOÀN TEAM] ⚠️ Kiểm tra lại:`);
+                console.warn(`[BXH TOÀN TEAM] ⚠️ - Tổng số đơn hàng: ${allOrders.length}`);
+                console.warn(`[BXH TOÀN TEAM] ⚠️ - Đơn hàng trong khoảng thời gian: ${periodOrders.length}`);
+                console.warn(`[BXH TOÀN TEAM] ⚠️ - saleMap có ${Object.keys(saleMap).length} người`);
+                console.warn(`[BXH TOÀN TEAM] ⚠️ - mktMap có ${Object.keys(mktMap).length} người`);
+            }
 
             return {
                 saleList,
@@ -1059,6 +1062,12 @@
         
         function updateData() {
             console.log('[BXH TOÀN TEAM] 🔄 ========== BẮT ĐẦU CẬP NHẬT DỮ LIỆU ==========');
+            console.log('[BXH TOÀN TEAM] 📊 Trạng thái dữ liệu:', {
+                allOrdersLength: allOrders.length,
+                salesReportDataLength: salesReportData.length,
+                mktReportDataLength: mktReportData.length,
+                hrDataLength: hrData.length
+            });
             
             // Kiểm tra xem dữ liệu đã được load chưa
             if (allOrders.length === 0) {
@@ -1142,12 +1151,52 @@
                 filterType: type
             });
             
-            const stats = calculateStats(start, end, shouldFilterStatus, isCurrentPeriod);
+            console.log('[BXH TOÀN TEAM] 🔍 Gọi calculateStats với:', {
+                start: start.toLocaleDateString('vi-VN'),
+                end: end.toLocaleDateString('vi-VN'),
+                shouldFilterStatus: shouldFilterStatus,
+                isCurrentPeriod: isCurrentPeriod,
+                allOrdersLength: allOrders.length
+            });
+            
+            let stats;
+            try {
+                stats = calculateStats(start, end, shouldFilterStatus, isCurrentPeriod);
+                console.log('[BXH TOÀN TEAM] ✅ calculateStats hoàn thành thành công');
+            } catch (e) {
+                console.error('[BXH TOÀN TEAM] ❌ Lỗi trong calculateStats:', e);
+                console.error('[BXH TOÀN TEAM] ❌ Error stack:', e.stack);
+                stats = { saleList: [], mktList: [] };
+            }
+            
+            console.log('[BXH TOÀN TEAM] 📊 Kết quả từ calculateStats:', {
+                saleListLength: stats.saleList ? stats.saleList.length : 0,
+                mktListLength: stats.mktList ? stats.mktList.length : 0,
+                hasSaleList: !!stats.saleList,
+                hasMktList: !!stats.mktList
+            });
 
             // Cập nhật hiển thị thời gian
             updateTimeRangeDisplay(null);
 
             // Render dữ liệu
+            console.log('[BXH TOÀN TEAM] 📊 Dữ liệu stats trước khi render:', {
+                saleListLength: stats.saleList ? stats.saleList.length : 0,
+                mktListLength: stats.mktList ? stats.mktList.length : 0,
+                saleListSample: stats.saleList ? stats.saleList.slice(0, 3).map(s => s.name) : [],
+                mktListSample: stats.mktList ? stats.mktList.slice(0, 3).map(m => m.name) : []
+            });
+            
+            // Kiểm tra nếu không có dữ liệu
+            if ((!stats.saleList || stats.saleList.length === 0) && (!stats.mktList || stats.mktList.length === 0)) {
+                console.error('[BXH TOÀN TEAM] ❌ KHÔNG CÓ DỮ LIỆU ĐỂ HIỂN THỊ!');
+                console.error('[BXH TOÀN TEAM] ❌ Vui lòng kiểm tra:');
+                console.error('[BXH TOÀN TEAM] ❌ 1. API có trả về dữ liệu không? (allOrders.length =', allOrders.length, ')');
+                console.error('[BXH TOÀN TEAM] ❌ 2. Khoảng thời gian được chọn có hợp lệ không?');
+                console.error('[BXH TOÀN TEAM] ❌ 3. Có đơn hàng trong khoảng thời gian này không?');
+                console.error('[BXH TOÀN TEAM] ❌ 4. Có nhân viên Sale/MKT trong đơn hàng không?');
+            }
+            
             renderTeamList('team-sale-list', stats.saleList || [], true);
             renderTeamList('team-mkt-list', stats.mktList || [], false);
 
@@ -1222,8 +1271,16 @@
 
         // Load dữ liệu khi trang load
         // Hiển thị thời gian ngay khi trang load (không cần đợi dữ liệu)
-        updateTimeRangeDisplay(null);
-        loadData();
+        // Đảm bảo DOM đã sẵn sàng trước khi chạy
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                updateTimeRangeDisplay(null);
+                loadData();
+            });
+        } else {
+            updateTimeRangeDisplay(null);
+            loadData();
+        }
 
         // Lắng nghe thay đổi filter settings
         window.addEventListener('storage', function(e) {

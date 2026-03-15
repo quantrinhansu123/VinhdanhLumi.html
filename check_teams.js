@@ -1,5 +1,5 @@
 // Script để kiểm tra tất cả các team có chứa "test"
-const HR_URL = 'https://lumi-6dff7-default-rtdb.asia-southeast1.firebasedatabase.app/datasheet/Nh%C3%A2ns%E1%BB%B1';
+const HR_URL = 'https://lumidataapi.vercel.app/employees';
 
 function findVal(obj, keys) {
     if (!obj) return null;
@@ -16,14 +16,14 @@ function findVal(obj, keys) {
 async function checkTeams() {
     try {
         console.log('Đang tải dữ liệu từ HR API...');
-        const response = await fetch(HR_URL + '.json');
+        const response = await fetch(HR_URL);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        const hrData = Array.isArray(data) ? data : Object.values(data);
+        const hrData = data.employeeData || [];
         
         console.log(`Tổng số nhân sự: ${hrData.length}\n`);
         

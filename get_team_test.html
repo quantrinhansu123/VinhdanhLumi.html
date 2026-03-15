@@ -53,7 +53,7 @@
     <div id="result" class="result loading">Đang tải dữ liệu...</div>
 
     <script>
-        const HR_URL = 'https://lumi-6dff7-default-rtdb.asia-southeast1.firebasedatabase.app/datasheet/Nh%C3%A2ns%E1%BB%B1';
+        const HR_URL = 'https://lumidataapi.vercel.app/employees';
 
         function normalizeName(name) {
             if (!name) return '';
@@ -77,13 +77,13 @@
 
         async function loadTeamTest() {
             try {
-                const response = await fetch(HR_URL + '.json');
+                const response = await fetch(HR_URL);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const data = await response.json();
-                const hrData = Array.isArray(data) ? data : Object.values(data);
+                const hrData = data.employeeData || [];
                 
                 console.log('Tổng số nhân sự:', hrData.length);
                 

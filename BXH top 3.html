@@ -923,7 +923,7 @@
         const F3_URL = 'https://n-api-gamma.vercel.app/sheet/F3/data';
         const REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo sale';
         const MKT_REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo MKT';
-        const HR_URL = 'https://lumi-6dff7-default-rtdb.asia-southeast1.firebasedatabase.app/datasheet/Nh%C3%A2ns%E1%BB%B1';
+        const HR_URL = 'https://lumidataapi.vercel.app/employees';
 
         let allOrders = [];
         let salesReportData = [];
@@ -1016,20 +1016,6 @@
             return parseInt(String(moneyStr || 0).replace(/\./g, '').replace(/,/g, '').replace(/\D/g, '')) || 0;
         }
 
-        function extractGoogleDriveFileId(link) {
-            if (!link) return null;
-            const str = link.toString().trim();
-            let m = str.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if (m) return m[1];
-            m = str.match(/[?&]id=([a-zA-Z0-9_-]+)/); if (m) return m[1];
-            m = str.match(/open[?&]id=([a-zA-Z0-9_-]+)/); if (m) return m[1];
-            return null;
-        }
-
-        function convertGoogleDriveLink(link) {
-            if (!link) return link;
-            const fileId = extractGoogleDriveFileId(link);
-            return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : link;
-        }
 
         // --- AVATAR & HR MAP ---
         const AVATAR_DATA = {
@@ -1128,13 +1114,8 @@
             if (hrDataMap) {
                 const hrRecord = hrDataMap.get(nameNormalized);
                 if (hrRecord) {
-                    let imageLink = hrRecord['Link ảnh'] || hrRecord['link ảnh'] || hrRecord['Link_ảnh'] ||
-                        hrRecord['Link anh'] || hrRecord['link anh'] || hrRecord['Link_anh'] ||
-                        hrRecord['Ảnh'] || hrRecord['anh'] || hrRecord['Image'] || hrRecord['image'] ||
-                        hrRecord['Avatar'] || hrRecord['avatar'] || hrRecord['Ảnh đại diện'] ||
-                        hrRecord['Anh dai dien'] || hrRecord['Anh_dai_dien'] ||
-                        hrRecord['LINK ẢNH'] || hrRecord['LINK_ẢNH'];
-                    if (imageLink && imageLink.trim()) return convertGoogleDriveLink(imageLink.trim());
+                    const imageLink = hrRecord['link_anh'];
+                    if (imageLink && imageLink.trim()) return imageLink.trim();
                 }
             }
             return ''; // Không có ảnh thì để trống
@@ -1147,7 +1128,7 @@
                     fetch(F3_URL).catch(() => null),
                     fetch(REPORT_URL).catch(() => null),
                     fetch(MKT_REPORT_URL).catch(() => null),
-                    fetch(HR_URL + '.json').catch(() => null)
+                    fetch(HR_URL).catch(() => null)
                 ]);
 
                 if (resF3 && resF3.ok) {
@@ -1167,7 +1148,7 @@
                 }
                 if (resHr && resHr.ok) {
                     const data = await resHr.json();
-                    hrData = Array.isArray(data) ? data : Object.values(data);
+                    hrData = data.employeeData || [];
                     buildHRDataMap();
                 }
 

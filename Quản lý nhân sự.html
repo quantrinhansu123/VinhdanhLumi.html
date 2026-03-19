@@ -487,12 +487,40 @@
             return link;
         }
 
+        // Kiểm tra nhân sự có thuộc vòng tự chiếu không
+        function isInSelfEvaluationRound(emp) {
+            // Hỗ trợ nhiều kiểu/field đặt tên khác nhau
+            const flags = [
+                emp.vong_tu_chieu,
+                emp['Vòng tự chiếu'],
+                emp.vong_tu_chieu_flag,
+                emp.vong_tu_chieu_bool
+            ];
+
+            // Nếu không có field nào, coi như được hiển thị (tránh ẩn nhầm toàn bộ)
+            if (flags.every(v => v === undefined || v === null || v === '')) {
+                return true;
+            }
+
+            const raw = String(flags.find(v => v !== undefined && v !== null && v !== '')).trim().toLowerCase();
+
+            // Các giá trị được coi là "không vào vòng tự chiếu"
+            const negativeValues = ['không', 'ko', '0', 'false', 'no'];
+            if (negativeValues.includes(raw)) return false;
+
+            // Mặc định còn lại là có vào vòng tự chiếu
+            return true;
+        }
+
         // Render bảng
         function renderTable() {
             const tbody = document.getElementById('employee-tbody');
             tbody.innerHTML = '';
+
+            // Ẩn các nhân sự không vào vòng tự chiếu
+            const visibleEmployees = filteredEmployees.filter(isInSelfEvaluationRound);
             
-            filteredEmployees.forEach((emp, index) => {
+            visibleEmployees.forEach((emp, index) => {
                 const row = document.createElement('tr');
                 const isEditing = editingRows.has(emp.id);
                 

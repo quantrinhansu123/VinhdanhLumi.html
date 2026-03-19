@@ -1213,36 +1213,10 @@
             // Debug: In khoảng thời gian đang lọc
             console.log(`[KHOẢNG THỜI GIAN] ${startDate.toLocaleDateString('vi-VN')} → ${endDate.toLocaleDateString('vi-VN')}`);
 
+            // DANH SÁCH GỐC (CHƯA LỌC CA, CHƯA LỌC TỶ LỆ) – DÙNG CHO BXH TOÀN TEAM
             let saleList = Object.keys(saleMap).map(name => ({
                 name, rawVal: saleMap[name], value: formatMoney(saleMap[name]), avatar: getAvatar(name)
             })).sort((a, b) => b.rawVal - a.rawVal);
-
-            // --------------------------------------------------------------------------------
-            // BỘ LỌC CƠ BẢN + LỌC MẠNH TAY "PAGE" VÀ "MCN" NGAY TỪ NGUỒN
-            // --------------------------------------------------------------------------------
-            const EXCLUDED = ['Mai Thị Lý', 'Phạm Hải Yến', 'Trần Thị Nhung', 'Lê Ngọc Đài Trang', 'Đinh Thị Hoài Thư', 'Đỗ Thị Thu Hằng', 'Đinh Văn Khải', 'Lê Trung Hiếu', 'page-MCN', 'Hoàng Tuấn Cường', 'Trần Văn Tiến', 'Bùi Đức Tài', 'Phan Thị Chiến', 'Dương Thị Hạnh', 'Nguyễn Văn Hoàng'];
-
-            const aggressiveFilter = (i) => {
-                const n = i.name.toLowerCase();
-                return !EXCLUDED.includes(i.name) &&
-                    !n.includes('lumi') &&
-                    !n.includes('page') && // Lọc tất cả tên có chứa "page"
-                    !n.includes('mcn');    // Lọc tất cả tên có chứa "mcn"
-            };
-
-            saleList = saleList.filter(aggressiveFilter);
-
-            // LỌC SALE THEO CA LÀM VIỆC (NGÀY: 7h-19h, ĐÊM: 19h-7h)
-            const currentShift = getCurrentShift();
-            console.log(`[SHIFT FILTER] Current shift: ${currentShift} (${new Date().getHours()}:00)`);
-            const beforeShiftFilter = saleList.length;
-            saleList = saleList.filter(i => isStaffInShift(i.name, currentShift));
-            console.log(`[SHIFT FILTER] Sale personnel: ${beforeShiftFilter} → ${saleList.length} (filtered by shift)`);
-
-            if (saleList.length > 0) {
-                const max = saleList[0].rawVal;
-                saleList.forEach(i => i.percent = max > 0 ? (i.rawVal / max) * 100 : 0);
-            }
 
             let mktList = Object.keys(mktMap).map(name => ({
                 name, rawVal: mktMap[name], value: formatMoney(mktMap[name]), avatar: getAvatar(name)
@@ -1254,14 +1228,6 @@
                     console.log(`[TỔNG KẾT] ${name}: ${mktMap[name].toLocaleString('vi-VN')} VNĐ (${(mktMap[name] / 1000000).toFixed(1)} triệu)`);
                 }
             });
-
-            // ÁP DỤNG LỌC MẠNH TAY CHO MKT LUÔN
-            mktList = mktList.filter(aggressiveFilter);
-
-            if (mktList.length > 0) {
-                const max = mktList[0].rawVal;
-                mktList.forEach(i => i.percent = max > 0 ? (i.rawVal / max) * 100 : 0);
-            }
 
             // Tính toán Số mess, Số đơn, Tỉ lệ chốt cho Sale
             saleList.forEach(item => {
@@ -1317,7 +1283,7 @@
                 item.displayRate = item.adsRate.toFixed(1) + "%";
             });
 
-            // LƯU BẢN SAO TRƯỚC KHI LỌC (để dùng cho BXH Toàn Team)
+            // LƯU BẢN SAO TRƯỚC KHI LỌC (để dùng cho BXH Toàn Team – KHÔNG LỌC CA / TỶ LỆ)
             console.log('[CALCULATE STATS] Trước khi lưu unfiltered:', {
                 saleListLength: saleList.length,
                 mktListLength: mktList.length,
@@ -1330,6 +1296,41 @@
                 saleListUnfilteredLength: saleListUnfiltered.length,
                 mktListUnfilteredLength: mktListUnfiltered.length
             });
+
+            // --------------------------------------------------------------------------------
+            // TỪ ĐÂY TRỞ XUỐNG: CÁC LỌC CHỈ ẢNH HƯỞNG BXH TOP 3 (KHÔNG ẢNH HƯỞNG BXH TOÀN TEAM)
+            // --------------------------------------------------------------------------------
+
+            // BỘ LỌC CƠ BẢN + LỌC MẠNH TAY "PAGE" VÀ "MCN" NGAY TỪ NGUỒN
+            const EXCLUDED = ['Mai Thị Lý', 'Phạm Hải Yến', 'Trần Thị Nhung', 'Lê Ngọc Đài Trang', 'Đinh Thị Hoài Thư', 'Đỗ Thị Thu Hằng', 'Đinh Văn Khải', 'Lê Trung Hiếu', 'page-MCN', 'Hoàng Tuấn Cường', 'Trần Văn Tiến', 'Bùi Đức Tài', 'Phan Thị Chiến', 'Dương Thị Hạnh', 'Nguyễn Văn Hoàng'];
+
+            const aggressiveFilter = (i) => {
+                const n = i.name.toLowerCase();
+                return !EXCLUDED.includes(i.name) &&
+                    !n.includes('lumi') &&
+                    !n.includes('page') && // Lọc tất cả tên có chứa "page"
+                    !n.includes('mcn');    // Lọc tất cả tên có chứa "mcn"
+            };
+
+            saleList = saleList.filter(aggressiveFilter);
+            mktList = mktList.filter(aggressiveFilter);
+
+            // LỌC SALE THEO CA LÀM VIỆC (NGÀY: 7h-19h, ĐÊM: 19h-7h)
+            const currentShift = getCurrentShift();
+            console.log(`[SHIFT FILTER] Current shift: ${currentShift} (${new Date().getHours()}:00)`);
+            const beforeShiftFilter = saleList.length;
+            saleList = saleList.filter(i => isStaffInShift(i.name, currentShift));
+            console.log(`[SHIFT FILTER] Sale personnel: ${beforeShiftFilter} → ${saleList.length} (filtered by shift)`);
+
+            if (saleList.length > 0) {
+                const max = saleList[0].rawVal;
+                saleList.forEach(i => i.percent = max > 0 ? (i.rawVal / max) * 100 : 0);
+            }
+
+            if (mktList.length > 0) {
+                const max = mktList[0].rawVal;
+                mktList.forEach(i => i.percent = max > 0 ? (i.rawVal / max) * 100 : 0);
+            }
 
             // LỌC SALE: CHỈ ÁP DỤNG KHI KHÔNG PHẢI TUẦN HIỆN TẠI
             // Loại bỏ những người có Close Rate < 9%

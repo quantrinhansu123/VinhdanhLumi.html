@@ -589,6 +589,16 @@
 
         function updatePlaque() {
             if (honorsData.length === 0) return;
+            
+            // Xóa thông báo Loading (nếu có)
+            const namePill = document.querySelector('.name-pill');
+            const mainTitle = document.querySelector('.main-title');
+            if (namePill && namePill.innerText === 'Đang tải dữ liệu...') namePill.innerText = '';
+            if (mainTitle && mainTitle.innerText === 'VUI LÒNG ĐỢI') mainTitle.innerText = '';
+            
+            // Hiện controls
+            document.getElementById('slideshow-controls').style.display = 'block';
+            
             const person = honorsData[currentIdx];
 
             // SỬ DỤNG RANK TỪ DỮ LIỆU thay vì tính toán theo index
@@ -626,19 +636,33 @@
 
         window.exitSlideshow = function () { window.location.href = 'BXH LUMI mới.html'; };
 
+        // Hàm lấy periodType hiện tại từ filterSettings
+        function getPeriodType() {
+            try {
+                const filterSettingsStr = localStorage.getItem('filterSettings');
+                if (filterSettingsStr) {
+                    const filterSettings = JSON.parse(filterSettingsStr);
+                    return filterSettings.periodType || 'week';
+                }
+            } catch (e) {}
+            return 'week';
+        }
+
         // Hàm load dữ liệu từ localStorage
         function loadHonorsData() {
             try {
-                const raw = localStorage.getItem('vinhDanhTop3');
+                const isMonth = getPeriodType() === 'month';
+                const key = isMonth ? 'vinhDanhTop3Thang' : 'vinhDanhTop3';
+                const raw = localStorage.getItem(key);
                 if (raw) {
                     const parsed = JSON.parse(raw);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         honorsData = parsed;
-                        console.log('[VINH DANH] Đã load dữ liệu:', honorsData.length, 'người');
+                        console.log('[VINH DANH] Đã load dữ liệu từ', key, ':', honorsData.length, 'người');
                         return true;
                     }
                 }
-                console.warn('[VINH DANH] Chưa có dữ liệu trong localStorage');
+                console.warn('[VINH DANH] Chưa có dữ liệu trong localStorage (Key:', key, ')');
                 return false;
             } catch (e) {
                 console.error('[VINH DANH] Lỗi load dữ liệu:', e);
@@ -648,13 +672,14 @@
 
         // Hàm tự động load BXH top 3 để tính toán dữ liệu
         function triggerBXHTop3Load() {
-            console.log('[VINH DANH] Chưa có dữ liệu, đang trigger load BXH top 3...');
+            console.log('[VINH DANH] Chưa có dữ liệu, đang trigger load frame...');
             const hiddenFrame = document.createElement('iframe');
             hiddenFrame.style.position = 'absolute';
             hiddenFrame.style.left = '-9999px';
             hiddenFrame.style.width = '1px';
             hiddenFrame.style.height = '1px';
-            hiddenFrame.src = './BXH top 3.html';
+            const isMonth = getPeriodType() === 'month';
+            hiddenFrame.src = isMonth ? './BXH top 3 tháng.html' : './BXH top 3.html';
             hiddenFrame.onload = function() {
                 console.log('[VINH DANH] BXH top 3 đã load, đợi tính toán dữ liệu...');
                 // Đợi 3 giây để BXH top 3 tính toán và lưu dữ liệu
@@ -678,19 +703,14 @@
 
             // Luôn load dữ liệu từ localStorage (không chỉ khi slideshow)
             if (loadHonorsData()) {
+                updatePlaque();
                 if (isSlideshow) {
-                    document.getElementById('slideshow-controls').style.display = 'block';
-                    updatePlaque();
-
                     // Tự động next sang nhân viên tiếp theo sau mỗi 1 phút (60 giây)
                     setInterval(() => {
                         if (honorsData.length > 0) {
                             changeSlide(1);
                         }
                     }, 60000); // 60000ms = 1 phút
-                } else {
-                    // Nếu không phải slideshow, vẫn hiển thị người đầu tiên
-                    updatePlaque();
                 }
             } else {
                 // Nếu chưa có dữ liệu, tự động trigger load BXH top 3
@@ -705,9 +725,6 @@
                         triggerBXHTop3Load();
                     } else {
                         // Nếu đã có dữ liệu, cập nhật
-                        if (isSlideshow) {
-                            document.getElementById('slideshow-controls').style.display = 'block';
-                        }
                         updatePlaque();
                     }
                 }, 2000);
@@ -786,8 +803,10 @@
 
         // Lắng nghe thay đổi trong localStorage để tự động cập nhật
         window.addEventListener('storage', function (e) {
-            if (e.key === 'vinhDanhTop3') {
-                console.log('[VINH DANH] Phát hiện thay đổi dữ liệu trong localStorage');
+            const isMonth = getPeriodType() === 'month';
+            const activeKey = isMonth ? 'vinhDanhTop3Thang' : 'vinhDanhTop3';
+            if (e.key === activeKey) {
+                console.log('[VINH DANH] Phát hiện thay đổi dữ liệu trong localStorage (Key:', e.key, ')');
                 if (loadHonorsData()) {
                     currentIdx = 0; // Reset về người đầu tiên
                     updatePlaque();
@@ -835,26 +854,19 @@
         
         setInterval(() => {
             try {
-                const currentData = localStorage.getItem('vinhDanhTop3');
+                const isMonth = getPeriodType() === 'month';
+                const key = isMonth ? 'vinhDanhTop3Thang' : 'vinhDanhTop3';
+                const currentData = localStorage.getItem(key);
                 
                 // Phát hiện khi dữ liệu xuất hiện lần đầu hoặc thay đổi
                 if (currentData) {
                     if (!hasInitialData || currentData !== lastHonorsDataHash) {
                         lastHonorsDataHash = currentData;
                         hasInitialData = true;
-                        console.log('[VINH DANH] Phát hiện dữ liệu qua polling');
+                        console.log('[VINH DANH] Phát hiện dữ liệu qua polling cho', key);
                         if (loadHonorsData()) {
                             currentIdx = 0; // Reset về người đầu tiên
                             updatePlaque();
-                            // Ẩn thông báo "Đang tải dữ liệu" nếu có
-                            const namePill = document.querySelector('.name-pill');
-                            const mainTitle = document.querySelector('.main-title');
-                            if (namePill && namePill.innerText === 'Đang tải dữ liệu...') {
-                                namePill.innerText = '';
-                            }
-                            if (mainTitle && mainTitle.innerText === 'VUI LÒNG ĐỢI') {
-                                mainTitle.innerText = '';
-                            }
                         }
                     }
                 } else {

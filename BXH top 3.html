@@ -829,14 +829,14 @@
 
             <!-- CHỌN TUẦN: Đã đổi sang Thứ 2 -> Chủ Nhật (tự động cập nhật) -->
             <div id="week-filter-container">
-                <select class="filter-select" id="period-value" onchange="updateData()">
+                <select class="filter-select" id="period-value" onchange="loadData()">
                     <!-- Options sẽ được tự động tạo bởi populateWeekOptions() -->
                 </select>
             </div>
 
             <!-- CHỌN THÁNG & NĂM -->
             <div id="month-filter-container" style="display: none; gap: 5px;">
-                <select class="filter-select" id="filter-month" onchange="adjustYearForMonth(); updateData();">
+                <select class="filter-select" id="filter-month" onchange="adjustYearForMonth(); loadData();">
                     <option value="1">Tháng 1</option>
                     <option value="2">Tháng 2</option>
                     <option value="3">Tháng 3</option>
@@ -850,7 +850,7 @@
                     <option value="11">Tháng 11</option>
                     <option value="12">Tháng 12</option>
                 </select>
-                <select class="filter-select" id="filter-year" onchange="updateData()">
+                <select class="filter-select" id="filter-year" onchange="loadData()">
                     <!-- JS sẽ điền năm -->
                 </select>
             </div>
@@ -919,11 +919,14 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const F3_URL = 'https://n-api-gamma.vercel.app/sheet/F3/data';
-        const REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo sale';
-        const MKT_REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo MKT';
         const HR_URL = 'https://lumidataapi.vercel.app/employees';
+
+        const supabaseUrl = 'https://gsjhsmxyxjyiqovauyrp.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzamhzbXh5eGp5aXFvdmF1eXJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDg3NDAsImV4cCI6MjA4MzM4NDc0MH0.kUZgyFH437NWYb0HF4tWkViyB-OzodjBV8979mx5kiI';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let allOrders = [];
         let salesReportData = [];
@@ -1124,32 +1127,83 @@
         // --- LOAD DATA ---
         async function loadData() {
             try {
-                const [resF3, resReport, resMkt, resHr] = await Promise.all([
-                    fetch(F3_URL).catch(() => null),
-                    fetch(REPORT_URL).catch(() => null),
-                    fetch(MKT_REPORT_URL).catch(() => null),
-                    fetch(HR_URL).catch(() => null)
-                ]);
+                allOrders = [];
+                salesReportData = [];
+                mktReportData = [];
 
-                if (resF3 && resF3.ok) {
-                    const json = await resF3.json();
-                    if (json.success && Array.isArray(json.data)) allOrders = json.data;
-                    else if (Array.isArray(json)) allOrders = json;
-                    else allOrders = Object.values(json.data || json);
+                const periodTypeEl = document.getElementById('period-type');
+                const type = periodTypeEl ? periodTypeEl.value : 'week';
+                
+                let filterSettings = null;
+                try {
+                    const settingsStr = localStorage.getItem('filterSettings');
+                    if (settingsStr) filterSettings = JSON.parse(settingsStr);
+                } catch (e) {}
+
+                let val;
+                if (type === 'week') {
+                    val = document.getElementById('filter-week') ? document.getElementById('filter-week').value : getCurrentWeek();
+                } else {
+                    val = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1);
                 }
 
-                if (resReport && resReport.ok) {
-                    const json = await resReport.json();
-                    salesReportData = Array.isArray(json) ? json : (json.data || []);
+                const { start, end } = getDateRange(type, val);
+
+                const fetchStart = new Date(start.getFullYear(), start.getMonth(), 1);
+                const fetchEnd = new Date(end.getFullYear(), end.getMonth() + 1, 1); 
+                
+                function pad(n) { return n < 10 ? '0' + n : n; }
+                const startStr = fetchStart.getFullYear() + '-' + pad(fetchStart.getMonth() + 1) + '-' + pad(fetchStart.getDate());
+                const endStr = fetchEnd.getFullYear() + '-' + pad(fetchEnd.getMonth() + 1) + '-' + pad(fetchEnd.getDate());
+                console.log("[FETCH LIMITS] Loading Data from:", startStr, "to", endStr);
+
+                const promises = [];
+
+                if (!hrData || hrData.length === 0) {
+                    promises.push(
+                        fetch(HR_URL).then(r => r.json()).then(data => {
+                            hrData = data.employeeData || [];
+                            buildHRDataMap();
+                        }).catch(() => null)
+                    );
+                } else {
+                    promises.push(Promise.resolve(true));
                 }
-                if (resMkt && resMkt.ok) {
-                    const json = await resMkt.json();
-                    mktReportData = Array.isArray(json) ? json : (json.data || []);
+
+                if (supabaseClient) {
+                    promises.push(supabaseClient.from('orders').select('*').gte('order_date', startStr).lte('order_date', endStr).order('created_at', { ascending: false }));
+                    promises.push(supabaseClient.from('sales_reports').select('*').gte('date', startStr).lte('date', endStr).order('created_at', { ascending: false }));
+                    promises.push(supabaseClient.from('detail_reports').select('*').gte('Ngày', startStr).lte('Ngày', endStr).order('created_at', { ascending: false }));
+                } else {
+                    promises.push(Promise.resolve({data: null}), Promise.resolve({data: null}), Promise.resolve({data: null}));
                 }
-                if (resHr && resHr.ok) {
-                    const data = await resHr.json();
-                    hrData = data.employeeData || [];
-                    buildHRDataMap();
+
+                const [hrRes, ordersRes, saleRes, mktRes] = await Promise.all(promises);
+
+                if (ordersRes && !ordersRes.error && ordersRes.data) {
+                    allOrders = ordersRes.data;
+                }
+
+                if (allOrders.length === 0) {
+                    const resF3 = await fetch(F3_URL).catch(() => null);
+                    if (resF3 && resF3.ok) {
+                        const json = await resF3.json();
+                        if (json.success && Array.isArray(json.data)) allOrders = json.data;
+                        else if (Array.isArray(json)) allOrders = json;
+                        else allOrders = Object.values(json.data || json);
+                    }
+                }
+
+                if (saleRes && !saleRes.error && saleRes.data) {
+                    salesReportData = saleRes.data;
+                } else if (saleRes && saleRes.error) {
+                    console.error('Lỗi fetch sales_reports:', saleRes.error);
+                }
+
+                if (mktRes && !mktRes.error && mktRes.data) {
+                    mktReportData = mktRes.data;
+                } else if (mktRes && mktRes.error) {
+                    console.error('Lỗi fetch detail_reports:', mktRes.error);
                 }
 
                 updateData();
@@ -1162,18 +1216,18 @@
         // --- CALCULATE STATS ---
         function calculateStats(startDate, endDate, filterCancelled, isCurrentPeriod = false) {
             const periodOrders = allOrders.filter(o => {
-                const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Ngay len don", "Date"]);
+                const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Ngay len don", "Date", "order_date"]);
                 const d = parseDateSafe(rawDate);
                 if (!d) return false;
 
-                const team = String(findVal(o, ["Team", "TEAM", "Bộ phận"]) || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const team = String(findVal(o, ["Team", "TEAM", "Bộ phận", "team"]) || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 const hasHanoi = team.includes("ha noi") || team.includes("hanoi") || team.includes("hn");
                 if (!hasHanoi) return false;
 
                 if (d < startDate || d > endDate) return false;
 
                 if (filterCancelled) {
-                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status"]) || "").trim().toLowerCase();
+                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status", "check_result"]) || "").trim().toLowerCase();
                     if (status !== "ok") return false;
                 }
                 return true;
@@ -1184,8 +1238,8 @@
             const saleOrderCount = {};
 
             periodOrders.forEach(o => {
-                const money = parseMoney(findVal(o, ["Tổng tiền VNĐ", "Tổng_tiền_VNĐ", "Total"]));
-                const saleName = String(findVal(o, ["Nhân_viên_Sale", "Nhân viên Sale", "Sale"]) || "").trim();
+                const money = parseMoney(findVal(o, ["Tổng tiền VNĐ", "Tổng_tiền_VNĐ", "Total", "total_amount_vnd", "total_vnd", "van_don_line_total_vnd"]));
+                const saleName = String(findVal(o, ["Nhân_viên_Sale", "Nhân viên Sale", "Sale", "sale_staff"]) || "").trim();
                 if (saleName) {
                     if (!saleMap[saleName]) saleMap[saleName] = 0;
                     if (!saleOrderCount[saleName]) saleOrderCount[saleName] = 0;
@@ -1193,7 +1247,7 @@
                     saleOrderCount[saleName] += 1;
                 }
 
-                const mktName = String(findVal(o, ["Nhân_viên_Marketing", "Nhân viên Marketing", "MKT"]) || "").trim();
+                const mktName = String(findVal(o, ["Nhân_viên_Marketing", "Nhân viên Marketing", "MKT", "marketing_staff"]) || "").trim();
                 if (mktName) {
                     if (!mktMap[mktName]) mktMap[mktName] = 0;
                     mktMap[mktName] += money;
@@ -1220,13 +1274,13 @@
             // Bổ sung Metric
             saleList.forEach(item => {
                 const reports = salesReportData.filter(r => {
-                    const rName = String(findVal(r, ["Tên", "Ten", "Name", "Họ và tên"]) || "").trim();
+                    const rName = String(findVal(r, ["Tên", "Ten", "Name", "Họ và tên", "name"]) || "").trim();
                     if (normalizeName(rName) !== normalizeName(item.name)) return false;
-                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Ngay", "Date"]));
+                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Ngay", "Date", "date"]));
                     return !rDate || (rDate >= startDate && rDate <= endDate);
                 });
                 let totalMess = 0;
-                reports.forEach(r => { totalMess += Number(findVal(r, ["Số Mess", "Mess"]) || 0); });
+                reports.forEach(r => { totalMess += Number(findVal(r, ["Số Mess", "Mess", "mess_count"]) || 0); });
                 item.totalMess = totalMess;
                 item.totalOrders = saleOrderCount[item.name] || 0;
                 item.closeRate = totalMess > 0 ? ((item.totalOrders / totalMess) * 100).toFixed(1) + "%" : "0%";
@@ -1234,16 +1288,16 @@
 
             mktList.forEach(item => {
                 const reports = mktReportData.filter(r => {
-                    const rName = String(findVal(r, ["Tên", "Ten", "Name", "Họ và tên"]) || "").trim();
+                    const rName = String(findVal(r, ["Tên", "Ten", "Name", "Họ và tên", "name"]) || "").trim();
                     if (normalizeName(rName) !== normalizeName(item.name)) return false;
-                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Ngay", "Date"]));
+                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Ngay", "Date", "date"]));
                     return !rDate || (rDate >= startDate && rDate <= endDate);
                 });
                 let totalCPQC = 0;
                 reports.forEach(r => {
-                    const ca = String(findVal(r, ["ca", "Ca"]) || "").trim().toLowerCase();
+                    const ca = String(findVal(r, ["ca", "Ca", "CA", "Ca làm việc"]) || "").trim().toLowerCase();
                     if (ca === "hết ca" || ca === "het ca") {
-                        totalCPQC += parseMoney(findVal(r, ["CPQC", "Chi phí QC"]) || 0);
+                        totalCPQC += parseMoney(findVal(r, ["CPQC", "cpqc", "Chi phí QC", "ADS", "ads"]) || 0);
                     }
                 });
                 item.cpqc = totalCPQC;
@@ -1257,8 +1311,8 @@
             // Lọc hiệu suất
             if (!isCurrentPeriod) {
                 saleList = saleList.filter(item => (parseFloat(item.closeRate) >= 9) || !item.totalMess);
+                mktList = mktList.filter(item => (item.adsRate <= 27) || !item.rawVal);
             }
-            mktList = mktList.filter(item => (item.adsRate <= 27) || !item.rawVal);
 
             if (saleList.length) {
                 const max = saleList[0].rawVal;
@@ -1346,7 +1400,7 @@
         // --- HELPER DATE FUNCTIONS (QUAN TRỌNG: THỨ 2 -> CHỦ NHẬT) ---
         // Tuần đầu tiên bắt đầu từ thứ 2, 29/12/2025
         const FIRST_WEEK_START = new Date(2025, 11, 29); // 29/12/2025 (thứ 2)
-        
+
         // Cache để lưu danh sách tuần đã tính toán
         let weekRangesCache = null;
 
@@ -1373,7 +1427,7 @@
             const now = new Date();
             const currentWeekRange = getWeekRange(now);
             const currentWeekStart = currentWeekRange.start;
-            
+
             // Tính đến tuần hiện tại + 4 tuần trong tương lai
             const endDate = new Date(currentWeekStart);
             endDate.setDate(endDate.getDate() + (4 * 7)); // +4 tuần
@@ -1414,7 +1468,6 @@
                     start = new Date(week.range.start);
                     end = new Date(week.range.end);
                 } else {
-                    // Fallback về tuần đầu tiên
                     const firstWeek = getWeekRange(FIRST_WEEK_START);
                     start = firstWeek.start;
                     end = firstWeek.end;
@@ -1422,8 +1475,21 @@
                 start.setHours(0, 0, 0, 0);
                 end.setHours(23, 59, 59, 999);
             } else {
-                const m = parseInt(document.getElementById('filter-month').value);
-                const y = parseInt(document.getElementById('filter-year').value);
+                let m = document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1;
+                let y = document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : new Date().getFullYear();
+                
+                // Fallback to localStorage if elements aren't initialized
+                if (!document.getElementById('filter-month') || !document.getElementById('filter-year')) {
+                    try {
+                        const settingsStr = localStorage.getItem('filterSettings');
+                        if (settingsStr) {
+                            const settings = JSON.parse(settingsStr);
+                            if (settings.month) m = settings.month;
+                            if (settings.year) y = settings.year;
+                        }
+                    } catch (e) {}
+                }
+                
                 start = new Date(y, m - 1, 1);
                 end = new Date(y, m, 0, 23, 59, 59);
             }
@@ -1475,7 +1541,7 @@
             document.getElementById('week-filter-container').style.display = type === 'week' ? 'block' : 'none';
             document.getElementById('month-filter-container').style.display = type === 'month' ? 'flex' : 'none';
             if (type === 'month') adjustYearForMonth();
-            updateData();
+            loadData();
         }
 
         function populateYears() {
@@ -1568,12 +1634,72 @@
         }
 
 
-        function initApp() {
+        async function initApp() {
             populateYears();
             populateWeekOptions(); // Tự động tạo các tuần
-            document.getElementById('filter-month').value = new Date().getMonth() + 1;
-            const currentWeek = getCurrentWeek();
-            if (document.getElementById('period-value')) document.getElementById('period-value').value = currentWeek;
+
+            // Gắn event listeners trực tiếp nếu người dùng click trên trang này
+            const typeSel = document.getElementById('period-type');
+            if (typeSel) typeSel.addEventListener('change', () => { saveFilterSettings(); toggleFilterUI(); });
+
+            const weekSel = document.getElementById('filter-week');
+            if (weekSel) weekSel.addEventListener('change', () => { saveFilterSettings(); loadData(); });
+
+            const monthSel = document.getElementById('filter-month');
+            if (monthSel) monthSel.addEventListener('change', () => { saveFilterSettings(); loadData(); });
+
+            const yearSel = document.getElementById('filter-year');
+            if (yearSel) yearSel.addEventListener('change', () => { adjustYearForMonth(); saveFilterSettings(); loadData(); });
+
+            // Đọc filterSettings từ localStorage để đồng bộ cấu hình nếu load độc lập (vd iframe)
+            let filterSettings = null;
+            try {
+                const settingsStr = localStorage.getItem('filterSettings');
+                if (settingsStr) {
+                    filterSettings = JSON.parse(settingsStr);
+                }
+            } catch(e) {
+                console.warn('Lỗi đọc filterSettings initApp:', e);
+            }
+
+            if (!filterSettings) {
+                const currentDate = new Date();
+                const currentWeek = getCurrentWeek();
+                filterSettings = {
+                    periodType: 'week',
+                    periodValue: currentWeek,
+                    month: currentDate.getMonth() + 1,
+                    year: currentDate.getFullYear()
+                };
+            }
+
+            if (document.getElementById('period-type') && filterSettings.periodType) {
+                document.getElementById('period-type').value = filterSettings.periodType;
+            }
+            if (document.getElementById('period-value') && filterSettings.periodValue) {
+                document.getElementById('period-value').value = filterSettings.periodValue;
+            }
+            if (document.getElementById('filter-month') && filterSettings.month) {
+                document.getElementById('filter-month').value = filterSettings.month;
+            }
+            if (document.getElementById('filter-year') && filterSettings.year) {
+                document.getElementById('filter-year').value = filterSettings.year;
+            }
+
+            if (typeof toggleFilterUI === 'function') {
+                toggleFilterUI();
+            } else {
+                loadData();
+            }
+
+            // Lắng nghe Message từ trang cha (index.html)
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'filterChanged') {
+                    console.log('Nhận thông báo filter thay đổi từ iframe parent');
+                    loadData();
+                }
+            });
+
             loadData();
         }
 

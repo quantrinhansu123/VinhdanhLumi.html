@@ -810,11 +810,14 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const F3_URL = 'https://n-api-gamma.vercel.app/sheet/F3/data';
-        const REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo sale';
-        const MKT_REPORT_URL = 'https://n-api-gamma.vercel.app/report/generate?tableName=Báo cáo MKT';
         const HR_URL = 'https://lumidataapi.vercel.app/employees';
+
+        const supabaseUrl = 'https://gsjhsmxyxjyiqovauyrp.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzamhzbXh5eGp5aXFvdmF1eXJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDg3NDAsImV4cCI6MjA4MzM4NDc0MH0.kUZgyFH437NWYb0HF4tWkViyB-OzodjBV8979mx5kiI';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let allOrders = [];
         let salesReportData = [];
@@ -1022,48 +1025,102 @@
             }
             return ''; // Không có ảnh thì để trống
         }
-
+        
         // --- LOAD DATA ---
         async function loadData() {
             try {
-                const [resF3, resReport, resMkt, resHr] = await Promise.all([
-                    fetch(F3_URL).catch(() => null),
-                    fetch(REPORT_URL).catch(() => null),
-                    fetch(MKT_REPORT_URL).catch(() => null),
-                    fetch(HR_URL).catch(() => null)
-                ]);
+                allOrders = [];
+                salesReportData = [];
+                mktReportData = [];
 
-                if (resF3 && resF3.ok) {
-                    const json = await resF3.json();
-                    console.log('[LOAD DATA] F3 Data Raw:', json);
-                    if (json.success && Array.isArray(json.data)) {
-                        allOrders = json.data;
-                        console.log('[LOAD DATA] Loaded orders from json.data:', allOrders.length);
-                    }
-                    else if (Array.isArray(json)) {
-                        allOrders = json;
-                        console.log('[LOAD DATA] Loaded orders from json array:', allOrders.length);
-                    }
-                    else {
-                        allOrders = Object.values(json.data || json);
-                        console.log('[LOAD DATA] Loaded orders from Object.values:', allOrders.length);
-                    }
+                const periodTypeEl = document.getElementById('period-type');
+                const type = periodTypeEl ? periodTypeEl.value : 'month';
+                
+                let filterSettings = null;
+                try {
+                    const settingsStr = localStorage.getItem('filterSettings');
+                    if (settingsStr) filterSettings = JSON.parse(settingsStr);
+                } catch (e) {}
+
+                let val;
+                if (type === 'week') {
+                    val = document.getElementById('filter-week') ? document.getElementById('filter-week').value : getCurrentWeek();
                 } else {
-                    console.warn('[LOAD DATA] F3 API không trả về dữ liệu hoặc có lỗi');
+                    val = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1);
                 }
 
-                if (resReport && resReport.ok) {
-                    const json = await resReport.json();
-                    salesReportData = Array.isArray(json) ? json : (json.data || []);
+                const { start, end } = getDateRange(type, val);
+
+                const fetchStart = new Date(start.getFullYear(), start.getMonth(), 1);
+                const fetchEnd = new Date(end.getFullYear(), end.getMonth() + 1, 1);
+                
+                function pad(n) { return n < 10 ? '0' + n : n; }
+                const startStr = fetchStart.getFullYear() + '-' + pad(fetchStart.getMonth() + 1) + '-' + pad(fetchStart.getDate());
+                const endStr = fetchEnd.getFullYear() + '-' + pad(fetchEnd.getMonth() + 1) + '-' + pad(fetchEnd.getDate());
+                console.log("[FETCH LIMITS] Loading Data from:", startStr, "to", endStr);
+
+                const promises = [];
+
+                if (!hrData || hrData.length === 0) {
+                    promises.push(
+                        fetch(HR_URL).then(r => r.json()).then(data => {
+                            hrData = data.employeeData || [];
+                            buildHRDataMap();
+                        }).catch(() => null)
+                    );
+                } else {
+                    promises.push(Promise.resolve(true));
                 }
-                if (resMkt && resMkt.ok) {
-                    const json = await resMkt.json();
-                    mktReportData = Array.isArray(json) ? json : (json.data || []);
+
+                if (supabaseClient) {
+                    promises.push(supabaseClient.from('orders').select('*').gte('order_date', startStr).lte('order_date', endStr).order('created_at', { ascending: false }));
+                    promises.push(supabaseClient.from('sales_reports').select('*').gte('date', startStr).lte('date', endStr).order('created_at', { ascending: false }));
+                    promises.push(supabaseClient.from('detail_reports').select('*').gte('Ngày', startStr).lte('Ngày', endStr).order('created_at', { ascending: false }));
+                } else {
+                    promises.push(Promise.resolve({data: null}), Promise.resolve({data: null}), Promise.resolve({data: null}));
                 }
-                if (resHr && resHr.ok) {
-                    const data = await resHr.json();
-                    hrData = data.employeeData || [];
-                    buildHRDataMap();
+
+                const [hrRes, ordersRes, saleRes, mktRes] = await Promise.all(promises);
+
+                if (ordersRes && !ordersRes.error && ordersRes.data) {
+                    allOrders = ordersRes.data;
+                    console.log('[LOAD DATA] Loaded orders from Supabase:', allOrders.length);
+                }
+
+                if (allOrders.length === 0) {
+                    const resF3 = await fetch(F3_URL).catch(() => null);
+                    if (resF3 && resF3.ok) {
+                        const json = await resF3.json();
+                        console.log('[LOAD DATA] F3 Data Raw:', json);
+                        if (json.success && Array.isArray(json.data)) {
+                            allOrders = json.data;
+                            console.log('[LOAD DATA] Loaded orders from json.data:', allOrders.length);
+                        }
+                        else if (Array.isArray(json)) {
+                            allOrders = json;
+                            console.log('[LOAD DATA] Loaded orders from json array:', allOrders.length);
+                        }
+                        else {
+                            allOrders = Object.values(json.data || json);
+                            console.log('[LOAD DATA] Loaded orders from Object.values:', allOrders.length);
+                        }
+                    } else {
+                        console.warn('[LOAD DATA] F3 API không trả về dữ liệu hoặc có lỗi');
+                    }
+                }
+
+                if (saleRes && !saleRes.error && saleRes.data) {
+                    salesReportData = saleRes.data;
+                    console.log('[LOAD DATA] Loaded sales reports from Supabase:', salesReportData.length);
+                } else if (saleRes && saleRes.error) {
+                    console.error('Lỗi fetch sales_reports:', saleRes.error);
+                }
+
+                if (mktRes && !mktRes.error && mktRes.data) {
+                    mktReportData = mktRes.data;
+                    console.log('[LOAD DATA] Loaded detail reports from Supabase:', mktReportData.length);
+                } else if (mktRes && mktRes.error) {
+                    console.error('Lỗi fetch detail_reports:', mktRes.error);
                 }
 
                 console.log('[LOAD DATA] Tổng số đơn sau khi load:', allOrders.length);
@@ -1115,12 +1172,12 @@
             };
 
             const periodOrders = allOrders.filter(o => {
-                const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Ngay len don", "Date"]);
+                const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Ngay len don", "Date", "order_date"]);
                 const d = parseDateSafe(rawDate);
                 if (!d) return false;
                 debugStats.hasDate++;
 
-                const team = String(findVal(o, ["Team", "TEAM", "Bộ phận"]) || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const team = String(findVal(o, ["Team", "TEAM", "Bộ phận", "team"]) || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 const hasHanoi = team.includes("ha noi") || team.includes("hanoi") || team.includes("hn");
                 if (!hasHanoi) return false;
                 debugStats.inTeam++;
@@ -1132,7 +1189,7 @@
                 // Tuần HIỆN TẠI: Tính tất cả đơn
                 // Tuần ĐÃ QUA + Tháng: Chỉ tính đơn có Kết quả Check = "Ok"
                 if (filterCancelled) {
-                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status"]) || "").trim().toLowerCase();
+                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status", "check_result"]) || "").trim().toLowerCase();
                     if (status !== "ok") return false;
                 }
                 debugStats.passedStatus++;
@@ -1148,17 +1205,17 @@
             if (allOrders.length > 0 && debugStats.inDateRange > 0) {
                 const allStatusValues = new Set();
                 allOrders.slice(0, 1000).forEach(o => {
-                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status"]) || "").trim();
+                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status", "check_result"]) || "").trim();
                     if (status) allStatusValues.add(status);
                 });
                 console.log("All unique status values in database:", Array.from(allStatusValues));
 
                 // Đếm status trong khoảng date range
                 const inRangeOrders = allOrders.filter(o => {
-                    const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Ngay len don", "Date"]);
+                    const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Ngay len don", "Date", "order_date"]);
                     const d = parseDateSafe(rawDate);
                     if (!d) return false;
-                    const team = String(findVal(o, ["Team", "TEAM", "Bộ phận"]) || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const team = String(findVal(o, ["Team", "TEAM", "Bộ phận", "team"]) || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                     const hasHanoi = team.includes("ha noi") || team.includes("hanoi") || team.includes("hn");
                     if (!hasHanoi) return false;
                     if (d < startDate || d > endDate) return false;
@@ -1167,7 +1224,7 @@
 
                 const statusCounts = {};
                 inRangeOrders.forEach(o => {
-                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status"]) || "").trim();
+                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status", "check_result"]) || "").trim();
                     const key = status || "(rỗng)";
                     statusCounts[key] = (statusCounts[key] || 0) + 1;
                 });
@@ -1180,9 +1237,9 @@
             const saleOrderCount = {}; // Đếm số đơn cho Sale
 
             periodOrders.forEach(o => {
-                const money = parseMoney(findVal(o, ["Tổng tiền VNĐ", "Tổng_tiền_VNĐ", "Total"]));
+                const money = parseMoney(findVal(o, ["Tổng tiền VNĐ", "Tổng_tiền_VNĐ", "Total", "total_amount_vnd", "total_vnd", "van_don_line_total_vnd"]));
 
-                const saleName = String(findVal(o, ["Nhân_viên_Sale", "Nhân viên Sale", "Sale"]) || "").trim();
+                const saleName = String(findVal(o, ["Nhân_viên_Sale", "Nhân viên Sale", "Sale", "sale_staff"]) || "").trim();
                 if (saleName) {
                     if (!saleMap[saleName]) saleMap[saleName] = 0;
                     if (!saleOrderCount[saleName]) saleOrderCount[saleName] = 0;
@@ -1190,14 +1247,14 @@
                     saleOrderCount[saleName] += 1; // Đếm số đơn
                 }
 
-                const mktName = String(findVal(o, ["Nhân_viên_Marketing", "Nhân viên Marketing", "MKT"]) || "").trim();
+                const mktName = String(findVal(o, ["Nhân_viên_Marketing", "Nhân viên Marketing", "MKT", "marketing_staff"]) || "").trim();
                 if (mktName) {
                     if (!mktMap[mktName]) mktMap[mktName] = 0;
                     mktMap[mktName] += money;
 
                     // Debug: In chi tiết đơn hàng của Mạnh Cường
                     if (mktName.toLowerCase().includes("mạnh cường") || mktName.toLowerCase().includes("manh cuong")) {
-                        const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Date"]);
+                        const rawDate = findVal(o, ["Ngày lên đơn", "Ngày_lên_đơn", "Date", "order_date"]);
                         const parsedDate = parseDateSafe(rawDate);
                         console.log(`[DEBUG] Đơn hàng của ${mktName}:`, {
                             ngayGoc: rawDate,
@@ -1233,17 +1290,17 @@
             saleList.forEach(item => {
                 // Lấy Số Mess từ salesReportData
                 const reports = salesReportData.filter(r => {
-                    const rName = String(findVal(r, ["Tên", "Ten", "Name", "Họ và tên"]) || "").trim();
+                    const rName = String(findVal(r, ["Tên", "Ten", "Name", "Họ và tên", "name"]) || "").trim();
                     if (normalizeName(rName) !== normalizeName(item.name)) return false;
 
-                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Ngay", "Date"]));
+                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Ngay", "Date", "date"]));
                     if (!rDate) return true; // Nếu không có ngày, chấp nhận
                     return rDate >= startDate && rDate <= endDate;
                 });
 
                 let totalMess = 0;
                 reports.forEach(r => {
-                    totalMess += Number(findVal(r, ["Số Mess", "Số Mess Cmt", "Mess", "So Mess"]) || 0);
+                    totalMess += Number(findVal(r, ["Số Mess", "Số Mess Cmt", "Mess", "So Mess", "mess_count"]) || 0);
                 });
 
                 // Lấy Số đơn từ periodOrders (đã lọc theo Kết quả Check = Ok)
@@ -1258,10 +1315,10 @@
             // Tính toán CPQC và ADS Rate cho MKT từ mktReportData
             mktList.forEach(item => {
                 const reports = mktReportData.filter(r => {
-                    const rName = String(findVal(r, ["Tên", "Ten", "Name", "Họ và tên"]) || "").trim();
+                    const rName = String(findVal(r, ["Tên", "Ten", "Name", "Họ và tên", "name"]) || "").trim();
                     if (normalizeName(rName) !== normalizeName(item.name)) return false;
 
-                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Ngay", "Date"]));
+                    const rDate = parseDateSafe(findVal(r, ["Ngày", "Ngay", "Date", "date"]));
                     if (!rDate) return true; // Nếu không có ngày, chấp nhận
                     return rDate >= startDate && rDate <= endDate;
                 });
@@ -1362,17 +1419,32 @@
                 console.log(`[FILTER] Sale: Tuần hiện tại - BỎ QUA lọc theo Close Rate`);
             }
 
-            // LỌC MKT: LUÔN ÁP DỤNG (cả tuần hiện tại)
+            // LỌC MKT: CHỈ ÁP DỤNG KHI KHÔNG PHẢI TUẦN HIỆN TẠI (giống Sale)
             // Loại bỏ những người có ADS Rate > 27%
-            const beforeMktFilter = mktList.length;
-            mktList = mktList.filter(item => {
-                // Nếu chưa có doanh thu, giữ lại
-                if (!item.doanhthu || item.doanhthu === 0) return true;
+            if (!isCurrentPeriod) {
+                const beforeMktFilter = mktList.length;
+                
+                // Kiểm tra xem có ai đạt <= 27% không
+                const hasAnyoneBelow27Percent = mktList.some(item => {
+                    if (!item.doanhthu || item.doanhthu === 0) return false;
+                    return item.adsRate <= 27;
+                });
 
-                // Nếu có doanh thu, kiểm tra ADS Rate <= 27%
-                return item.adsRate <= 27;
-            });
-            console.log(`[FILTER] MKT: ${beforeMktFilter} → ${mktList.length} (removed ADS Rate > 27%)`);
+                if (hasAnyoneBelow27Percent) {
+                    mktList = mktList.filter(item => {
+                        // Nếu chưa có doanh thu, giữ lại
+                        if (!item.doanhthu || item.doanhthu === 0) return true;
+
+                        // Nếu có doanh thu, kiểm tra ADS Rate <= 27%
+                        return item.adsRate <= 27;
+                    });
+                    console.log(`[FILTER] MKT: ${beforeMktFilter} → ${mktList.length} (removed ADS Rate > 27%)`);
+                } else {
+                    console.log(`[FILTER] MKT: Không có ai đạt <= 27% - BỎ QUA lọc theo ADS Rate`);
+                }
+            } else {
+                console.log(`[FILTER] MKT: Tuần hiện tại - BỎ QUA lọc theo ADS Rate`);
+            }
 
             // SẮP XẾP LẠI SAU KHI LỌC để đảm bảo thứ tự đúng
             saleList.sort((a, b) => b.rawVal - a.rawVal);
@@ -1612,7 +1684,6 @@
                     start = new Date(week.range.start);
                     end = new Date(week.range.end);
                 } else {
-                    // Fallback về tuần đầu tiên
                     const firstWeek = getWeekRange(FIRST_WEEK_START);
                     start = firstWeek.start;
                     end = firstWeek.end;
@@ -1620,17 +1691,21 @@
                 start.setHours(0, 0, 0, 0);
                 end.setHours(23, 59, 59, 999);
             } else {
-                // Đọc từ localStorage
-                let filterSettings = null;
-                try {
-                    const settingsStr = localStorage.getItem('filterSettings');
-                    if (settingsStr) {
-                        filterSettings = JSON.parse(settingsStr);
-                    }
-                } catch (e) { }
-
-                const m = filterSettings ? filterSettings.month : (document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1);
-                const y = filterSettings ? filterSettings.year : (document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : new Date().getFullYear());
+                let m = document.getElementById('filter-month') ? parseInt(document.getElementById('filter-month').value) : new Date().getMonth() + 1;
+                let y = document.getElementById('filter-year') ? parseInt(document.getElementById('filter-year').value) : new Date().getFullYear();
+                
+                // Fallback to localStorage if elements aren't initialized
+                if (!document.getElementById('filter-month') || !document.getElementById('filter-year')) {
+                    try {
+                        const settingsStr = localStorage.getItem('filterSettings');
+                        if (settingsStr) {
+                            const settings = JSON.parse(settingsStr);
+                            if (settings.month) m = settings.month;
+                            if (settings.year) y = settings.year;
+                        }
+                    } catch (e) {}
+                }
+                
                 start = new Date(y, m - 1, 1);
                 end = new Date(y, m, 0, 23, 59, 59);
             }
@@ -1686,7 +1761,7 @@
             if (type === 'month') {
                 adjustYearForMonth();
             }
-            updateData();
+            loadData();
         }
 
         function populateYears() {
@@ -1812,29 +1887,51 @@
             populateYears();
             populateWeekOptions(); // Tự động tạo các tuần
 
+            // Gắn event listeners trực tiếp nếu người dùng click trên trang này
+            const typeSel = document.getElementById('period-type');
+            if (typeSel) typeSel.addEventListener('change', () => { toggleFilterUI(); });
+
+            const weekSel = document.getElementById('filter-week');
+            if (weekSel) weekSel.addEventListener('change', () => { loadData(); });
+
+            const monthSel = document.getElementById('filter-month');
+            if (monthSel) monthSel.addEventListener('change', () => { loadData(); });
+
+            const yearSel = document.getElementById('filter-year');
+            if (yearSel) yearSel.addEventListener('change', () => { adjustYearForMonth(); loadData(); });
+
             // FILE NÀY LUÔN HIỂN THỊ THÁNG HIỆN TẠI
             const currentDate = new Date();
             const currentMonth = currentDate.getMonth() + 1;
             const currentYear = currentDate.getFullYear();
 
             // Tạo filter settings cho tháng hiện tại
-            const filterSettings = {
+            let filterSettings = {
                 periodType: 'month',
-                periodValue: null,
+                periodValue: getCurrentWeek(),
                 month: currentMonth,
                 year: currentYear
             };
 
-            // Lưu vào localStorage
-            localStorage.setItem('filterSettings', JSON.stringify(filterSettings));
-            console.log(`[BXH TOP 3 THÁNG] Luôn hiển thị tháng ${currentMonth}/${currentYear}`);
+            // Đọc từ localStorage xem có filter setting cũ ko (nếu trang index thay đổi)
+            try {
+                const settingsStr = localStorage.getItem('filterSettings');
+                if (settingsStr) {
+                    filterSettings = JSON.parse(settingsStr);
+                } else {
+                    localStorage.setItem('filterSettings', JSON.stringify(filterSettings));
+                    console.log(`[BXH TOP 3 THÁNG] Khởi tạo default tháng ${currentMonth}/${currentYear}`);
+                }
+            } catch (e) {
+                console.error('Lỗi đọc filter settings:', e);
+            }
 
             // Áp dụng filter settings
             if (document.getElementById('period-type')) {
-                document.getElementById('period-type').value = filterSettings.periodType || 'week';
+                document.getElementById('period-type').value = filterSettings.periodType || 'month';
             }
-            if (document.getElementById('period-value')) {
-                document.getElementById('period-value').value = filterSettings.periodValue || getCurrentWeek();
+            if (document.getElementById('filter-week')) {
+                document.getElementById('filter-week').value = filterSettings.periodValue || getCurrentWeek();
             }
             if (document.getElementById('filter-month')) {
                 document.getElementById('filter-month').value = filterSettings.month || new Date().getMonth() + 1;
@@ -1842,40 +1939,37 @@
             if (document.getElementById('filter-year')) {
                 document.getElementById('filter-year').value = filterSettings.year || new Date().getFullYear();
             }
+            
             toggleFilterUI();
 
             // Lắng nghe thay đổi filter từ parent window (index.html)
             window.addEventListener('message', function (event) {
                 if (event.data && event.data.type === 'filterChanged') {
-                    console.log('[BXH TOP 3] Nhận thông báo filter đã thay đổi, cập nhật dữ liệu...');
-                    updateData();
+                    console.log('[BXH TOP 3] Nhận thông báo filter đã thay đổi từ parent');
+                    loadData();
                 }
             });
 
             // Lắng nghe storage event
             window.addEventListener('storage', function (e) {
                 if (e.key === 'filterSettings') {
-                    console.log('[BXH TOP 3] Filter settings đã thay đổi, cập nhật dữ liệu...');
-                    updateData();
+                    console.log('[BXH TOP 3] Filter settings đã thay đổi qua storage');
+                    loadData();
                 }
             });
 
             // Polling để kiểm tra thay đổi filter (backup)
-            let lastFilterHash = '';
+            let lastFilterHash = localStorage.getItem('filterSettings');
             setInterval(() => {
                 try {
                     const currentFilter = localStorage.getItem('filterSettings');
                     if (currentFilter && currentFilter !== lastFilterHash) {
                         lastFilterHash = currentFilter;
                         console.log('[BXH TOP 3] Phát hiện thay đổi filter qua polling');
-                        updateData();
+                        loadData();
                     }
-                } catch (e) {
-                    console.error('Lỗi kiểm tra filter:', e);
-                }
+                } catch (e) {}
             }, 1000);
-
-            loadData();
         }
 
         // Modal functions
@@ -1993,9 +2087,8 @@
             });
 
             if (honorsData.length > 0) {
-                console.log('[BXH THÁNG] Không lưu dữ liệu vinh danh (Vinh danh chỉ lấy từ BXH tuần)');
-                // KHÔNG LƯU vào localStorage - để Vinh danh luôn lấy từ BXH tuần
-                // localStorage.setItem('vinhDanhTop3', JSON.stringify(honorsData));
+                console.log('[BXH THÁNG] Đã lưu dữ liệu vinh danh tháng vào vinhDanhTop3Thang');
+                localStorage.setItem('vinhDanhTop3Thang', JSON.stringify(honorsData));
             } else {
                 console.warn('[VINH DANH] Không có dữ liệu để lưu');
             }
@@ -2010,18 +2103,6 @@
             // SẮP XẾP LẠI trước khi lấy top 3 để đảm bảo thứ tự đúng
             const sortedSaleList = [...currentStats.saleList].sort((a, b) => b.rawVal - a.rawVal);
             const sortedMktList = [...currentStats.mktList].sort((a, b) => b.rawVal - a.rawVal);
-
-            // Debug: In ra danh sách Sale đã sắp xếp
-            console.log('[VINH DANH] Sale List (sorted):');
-            sortedSaleList.slice(0, 5).forEach((p, i) => {
-                console.log(`  #${i + 1}: ${p.name} - ${p.value} (${p.rawVal.toLocaleString('vi-VN')} VNĐ) - Close Rate: ${p.closeRate}`);
-            });
-
-            // Debug: In ra danh sách MKT đã sắp xếp
-            console.log('[VINH DANH] MKT List (sorted):');
-            sortedMktList.slice(0, 5).forEach((p, i) => {
-                console.log(`  #${i + 1}: ${p.name} - ${p.value} (${p.rawVal.toLocaleString('vi-VN')} VNĐ) - ADS Rate: ${p.displayRate}`);
-            });
 
             // Lấy top 3 từ Sale và MKT
             const topSale = sortedSaleList.slice(0, 3);
@@ -2063,14 +2144,7 @@
                 return;
             }
 
-            console.log('[VINH DANH] Honors Data:', honorsData);
-
-            console.log('[BXH THÁNG] Không lưu honors data (Vinh danh chỉ lấy từ BXH tuần)');
-
-            // KHÔNG LƯU vào localStorage - để Vinh danh luôn lấy từ BXH tuần
-            // localStorage.setItem('vinhDanhTop3', JSON.stringify(honorsData));
-
-            // Mở trang vinh danh với mode slideshow
+            localStorage.setItem('vinhDanhTop3Thang', JSON.stringify(honorsData));
             window.open('BXH V2.html?mode=slideshow', '_blank');
         }
 

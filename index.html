@@ -120,6 +120,14 @@
         let soundPlayer = null; // YouTube player để phát âm thanh
         let soundPlayCount = 0; // Đếm số lần đã phát
         let soundPlayTimer = null; // Timer để phát tuần tự
+        const CACHE_BUST = Date.now().toString();
+
+        function withCacheBust(url) {
+            if (!url) return url;
+            return url.includes('?')
+                ? `${url}&v=${CACHE_BUST}`
+                : `${url}?v=${CACHE_BUST}`;
+        }
 
         // Hàm callback khi YouTube API sẵn sàng
         function onYouTubeIframeAPIReady() {
@@ -286,7 +294,7 @@
                 }, 500);
             }
 
-            frame.src = tab.file;
+            frame.src = withCacheBust(tab.file);
 
             // Cập nhật trạng thái nút
             updateNavigationButtons();
@@ -340,7 +348,7 @@
                 hiddenFrame.style.left = '-9999px';
                 hiddenFrame.style.width = '1px';
                 hiddenFrame.style.height = '1px';
-                hiddenFrame.src = tabs[bxhTop3TabIndex].file;
+                hiddenFrame.src = withCacheBust(tabs[bxhTop3TabIndex].file);
                 hiddenFrame.onload = function() {
                     console.log('[INIT] BXH top 3 đã load xong, dữ liệu sẽ được tính toán và lưu vào localStorage');
                     // Xóa iframe sau 5 giây

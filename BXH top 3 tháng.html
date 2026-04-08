@@ -1478,10 +1478,8 @@
             const isCurrentPeriod = checkIsCurrentPeriod(type, weekValue);
 
             const { start, end } = getDateRange(type, weekValue);
-            // TUẦN HIỆN TẠI: KHÔNG lọc theo Kết quả Check (tính tất cả đơn)
-            // TUẦN ĐÃ QUA: CÓ lọc theo Kết quả Check (chỉ tính đơn Ok)
-            // THÁNG (tất cả): CÓ lọc theo Kết quả Check (chỉ tính đơn Ok)
-            const shouldFilterStatus = (type === 'month') || (type === 'week' && !isCurrentPeriod);
+            // TUẦN HIỆN TẠI/QUÁ KHỨ/THÁNG: TẤT CẢ tính tất cả đơn (Bỏ lọc Kết quả Check)
+            const shouldFilterStatus = false;
             const stats = calculateStats(start, end, shouldFilterStatus, isCurrentPeriod);
             currentStats = stats; // Lưu stats để dùng cho vinh danh
 
@@ -1538,8 +1536,8 @@
                 const mStart = new Date(selY, selM - 1, 1);
                 const mEnd = new Date(selY, selM, 0, 23, 59, 59);
 
-                // THÁNG luôn lọc theo Kết quả Check = "Ok" VÀ lọc theo %
-                const mStats = calculateStats(mStart, mEnd, true, false);
+                // THÁNG tính tất cả đơn (Bỏ lọc Kết quả Check)
+                const mStats = calculateStats(mStart, mEnd, false, false);
                 renderList('sale-month-list', mStats.saleList.slice(0, 2), true);
                 renderList('mkt-month-list', mStats.mktList.slice(0, 2), true);
 

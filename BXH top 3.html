@@ -1226,10 +1226,7 @@
 
                 if (d < startDate || d > endDate) return false;
 
-                if (filterCancelled) {
-                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status", "check_result"]) || "").trim().toLowerCase();
-                    if (status !== "ok") return false;
-                }
+                // Bỏ phần lọc tại đây để xử lý riêng cho Sale và MKT ở dưới
                 return true;
             });
 
@@ -1237,16 +1234,28 @@
             const mktMap = {};
             const saleOrderCount = {};
 
+            // Tính doanh số cho Sale và MKT
             periodOrders.forEach(o => {
                 const money = parseMoney(findVal(o, ["Tổng tiền VNĐ", "Tổng_tiền_VNĐ", "Total", "total_amount_vnd", "total_vnd", "van_don_line_total_vnd"]));
-                const saleName = String(findVal(o, ["Nhân_viên_Sale", "Nhân viên Sale", "Sale", "sale_staff"]) || "").trim();
-                if (saleName) {
-                    if (!saleMap[saleName]) saleMap[saleName] = 0;
-                    if (!saleOrderCount[saleName]) saleOrderCount[saleName] = 0;
-                    saleMap[saleName] += money;
-                    saleOrderCount[saleName] += 1;
+                
+                // 1. Logic cho Sale: Phải thỏa mãn điều kiện filterCancelled (Ok)
+                let passSaleFilter = true;
+                if (filterCancelled) {
+                    const status = String(findVal(o, ["Kết quả Check", "Kết_quả_Check", "Ket_qua_Check", "Status", "check_result"]) || "").trim().toLowerCase();
+                    if (status !== "ok") passSaleFilter = false;
                 }
 
+                if (passSaleFilter) {
+                    const saleName = String(findVal(o, ["Nhân_viên_Sale", "Nhân viên Sale", "Sale", "sale_staff"]) || "").trim();
+                    if (saleName) {
+                        if (!saleMap[saleName]) saleMap[saleName] = 0;
+                        if (!saleOrderCount[saleName]) saleOrderCount[saleName] = 0;
+                        saleMap[saleName] += money;
+                        saleOrderCount[saleName] += 1;
+                    }
+                }
+
+                // 2. Logic cho MKT: KHÔNG lọc theo trạng thái (luôn tính tất cả đơn)
                 const mktName = String(findVal(o, ["Nhân_viên_Marketing", "Nhân viên Marketing", "MKT", "marketing_staff"]) || "").trim();
                 if (mktName) {
                     if (!mktMap[mktName]) mktMap[mktName] = 0;
